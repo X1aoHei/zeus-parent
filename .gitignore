@@ -88,8 +88,13 @@ desktop.ini
 .env.local
 .env.*.local
 
-### Flatten Plugin ###
-.flattened-pom.xml
+### Maven Wrapper ###
+!.mvn/wrapper/maven-wrapper.jar
+!**/src/main/**/maven-wrapper.jar
+!**/src/test/**/maven-wrapper.jar
+
+### Project Settings (contains credentials) ###
+.mvn/settings.xml
 
 ### Maven Wrapper ###
 !.mvn/wrapper/maven-wrapper.jar
