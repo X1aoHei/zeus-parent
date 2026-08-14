@@ -34,13 +34,14 @@
     </modules>
 
     <properties>
-        <revision>1.0.0</revision>
+        <revision>1.1.0</revision>
         <java.version>17</java.version>
         <lombok.version>1.18.30</lombok.version>
         <fastjson2.version>2.0.53</fastjson2.version>
         <easyexcel.version>4.0.3</easyexcel.version>
         <mybatis-plus.version>3.5.12</mybatis-plus.version>
         <xxl-job.version>3.0.0</xxl-job.version>
+        <redisson.version>3.27.1</redisson.version>
     </properties>
 
     <dependencyManagement>
@@ -117,6 +118,12 @@
                 <groupId>com.xuxueli</groupId>
                 <artifactId>xxl-job-core</artifactId>
                 <version>${xxl-job.version}</version> <!-- 建议使用最新稳定版本 -->
+            </dependency>
+
+            <dependency>
+                <groupId>org.redisson</groupId>
+                <artifactId>redisson-spring-boot-starter</artifactId>
+                <version>${redisson.version}</version>
             </dependency>
 
             <!-- Zeus 内部模块 -->
