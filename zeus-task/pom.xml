@@ -13,5 +13,16 @@
     <artifactId>zeus-task</artifactId>
     <name>zeus-task</name>
 
+    <dependencies>
+        <dependency>
+            <groupId>com.xuxueli</groupId>
+            <artifactId>xxl-job-core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.github.x1aohei</groupId>
+            <artifactId>zeus-core</artifactId>
+        </dependency>
+    </dependencies>
+
 
 </project>

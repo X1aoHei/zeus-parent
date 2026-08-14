@@ -13,6 +13,11 @@
     <artifactId>zeus-concurrent</artifactId>
     <name>zeus-concurrent</name>
 
-
+    <dependencies>
+        <dependency>
+            <groupId>io.github.x1aohei</groupId>
+            <artifactId>zeus-core</artifactId>
+        </dependency>
+    </dependencies>
 
 </project>
