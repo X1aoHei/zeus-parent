@@ -1,9 +1,18 @@
 package com.wss.zeus.data.exchange.handler;
 
-import com.alibaba.fastjson2.JSONObject;
+import com.wss.zeus.data.exchange.entity.ExcelExportTaskEntity;
 
+/**
+ * Excel Feign 执行器接口
+ *
+ * @author wangshusheng
+ */
 public interface ExcelFeignHandler {
 
-    void execute(String bizName, JSONObject param);
-
+    /**
+     * 执行导出任务
+     *
+     * @param task 导出任务实体
+     */
+    void execute(ExcelExportTaskEntity task);
 }

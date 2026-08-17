@@ -24,6 +24,14 @@
             <artifactId>zeus-task</artifactId>
         </dependency>
         <dependency>
+            <groupId>io.github.x1aohei</groupId>
+            <artifactId>zeus-mq</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.github.x1aohei</groupId>
+            <artifactId>zeus-redis</artifactId>
+        </dependency>
+        <dependency>
             <groupId>com.alibaba</groupId>
             <artifactId>easyexcel</artifactId>
         </dependency>

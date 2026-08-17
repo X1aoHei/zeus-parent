@@ -1,9 +1,7 @@
 package com.wss.zeus.data.exchange.job;
 
-import com.alibaba.fastjson2.JSON;
-import com.alibaba.fastjson2.JSONObject;
 import com.wss.zeus.data.exchange.entity.ExcelExportTaskEntity;
-import com.wss.zeus.data.exchange.handler.ExcelFeignHandler;
+import com.wss.zeus.data.exchange.handler.ExcelExportExecutor;
 import com.wss.zeus.data.exchange.service.ExportTaskService;
 import com.xxl.job.core.handler.annotation.XxlJob;
 import lombok.RequiredArgsConstructor;
@@ -13,7 +11,10 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import java.util.List;
 
 /**
- * 导出任务Job
+ * 导出任务Job（兜底定时任务）
+ * <p>
+ * 轮询 Pending 状态的任务，通过 ExcelExportExecutor 执行（内部包含互斥逻辑）
+ * </p>
  *
  * @author wangshusheng
  */
@@ -22,9 +23,8 @@ import java.util.List;
 public class ExportTaskJob {
 
     private final ExportTaskService exportTaskService;
-    private final ExcelFeignHandler excelFeignHandler;
+    private final ExcelExportExecutor excelExportExecutor;
     private final ThreadPoolTaskExecutor exportTaskExecutor;
-
 
     @XxlJob("exportTaskForceExecute")
     public void exportTaskForceExecute() {
@@ -40,8 +40,7 @@ public class ExportTaskJob {
 
     private void doExecuteTask(ExcelExportTaskEntity task) {
         try {
-            JSONObject param = JSON.parseObject(task.getTaskParam());
-            excelFeignHandler.execute(task.getTemplateCode(), param);
+            excelExportExecutor.execute(task);
         } catch (Exception e) {
             log.error("导出任务执行失败, taskId={}", task.getTaskId(), e);
         }

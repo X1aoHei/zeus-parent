@@ -1,9 +1,14 @@
 package com.wss.zeus.data.exchange.config;
 
+import com.wss.zeus.core.common.file.FileStorageService;
 import com.wss.zeus.data.exchange.factory.ExcelFeignBeanFactory;
+import com.wss.zeus.data.exchange.handler.ExcelExportExecutor;
+import com.wss.zeus.data.exchange.handler.impl.DefaultExcelExportExecutor;
 import com.wss.zeus.data.exchange.handler.impl.DefaultExcelFeignHandler;
 import com.wss.zeus.data.exchange.processor.ExcelFeignPostProcessor;
+import com.wss.zeus.data.exchange.repository.ExcelExportTaskRepository;
 import lombok.extern.slf4j.Slf4j;
+import org.redisson.api.RedissonClient;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -24,17 +29,29 @@ public class ExcelFeignConfiguration {
 
     /**
      * 注册 ExcelFeignPostProcessor
-     *
-     * @param excelFeignBeanFactory
-     * @return ExcelFeignPostProcessor 实例
      */
     @Bean
     public ExcelFeignPostProcessor excelFeignPostProcessor(ExcelFeignBeanFactory excelFeignBeanFactory) {
         return new ExcelFeignPostProcessor(excelFeignBeanFactory);
     }
 
+    /**
+     * 注册 DefaultExcelFeignHandler
+     */
     @Bean
-    public DefaultExcelFeignHandler defaultExcelFeignHandler(ExcelFeignBeanFactory excelFeignBeanFactory) {
-        return new DefaultExcelFeignHandler(excelFeignBeanFactory);
+    public DefaultExcelFeignHandler defaultExcelFeignHandler(ExcelFeignBeanFactory excelFeignBeanFactory,
+                                                             FileStorageService fileStorageService,
+                                                             ExcelExportTaskRepository excelExportTaskRepository) {
+        return new DefaultExcelFeignHandler(excelFeignBeanFactory, fileStorageService, excelExportTaskRepository);
+    }
+
+    /**
+     * 注册 ExcelExportExecutor（带互斥保护的执行器）
+     */
+    @Bean
+    public ExcelExportExecutor excelExportExecutor(DefaultExcelFeignHandler defaultExcelFeignHandler,
+                                                   ExcelExportTaskRepository excelExportTaskRepository,
+                                                   RedissonClient redissonClient) {
+        return new DefaultExcelExportExecutor(defaultExcelFeignHandler, excelExportTaskRepository, redissonClient);
     }
 }
