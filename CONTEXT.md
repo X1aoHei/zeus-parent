@@ -22,6 +22,8 @@
 | **Processing** | 任务正在执行中 |
 | **Success** | 任务执行成功，文件已生成 |
 | **Fail** | 任务执行失败，记录 `errorReason` |
+| **提交锁** | `lock:export:task:submit:{templateCode}:{operatorUserId}`，防止同一用户并发提交 |
+| **执行锁** | `lock:export:task:execute:{taskId}`，防止 MQ 消费者和定时任务并发执行同一任务 |
 
 ## 模块职责
 

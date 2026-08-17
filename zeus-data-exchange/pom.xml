@@ -24,8 +24,9 @@
             <artifactId>zeus-task</artifactId>
         </dependency>
         <dependency>
-            <groupId>io.github.x1aohei</groupId>
-            <artifactId>zeus-mq</artifactId>
+            <groupId>org.apache.rocketmq</groupId>
+            <artifactId>rocketmq-spring-boot-starter</artifactId>
+            <version>2.3.0</version>
         </dependency>
         <dependency>
             <groupId>io.github.x1aohei</groupId>

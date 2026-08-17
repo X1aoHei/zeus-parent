@@ -26,15 +26,15 @@
         <module>zeus-data-exchange</module>
         <module>zeus-dubbo</module>
         <module>zeus-feign</module>
-        <module>zeus-mq</module>
         <module>zeus-mybatisplus</module>
         <module>zeus-redis</module>
         <module>zeus-task</module>
+        <module>zeus-web</module>
         <module>zeus-data-exchange-starter</module>
     </modules>
 
     <properties>
-        <revision>1.1.0</revision>
+        <revision>1.2.0</revision>
         <java.version>17</java.version>
         <lombok.version>1.18.30</lombok.version>
         <fastjson2.version>2.0.53</fastjson2.version>
@@ -149,11 +149,6 @@
             </dependency>
             <dependency>
                 <groupId>io.github.x1aohei</groupId>
-                <artifactId>zeus-mq</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>io.github.x1aohei</groupId>
                 <artifactId>zeus-feign</artifactId>
                 <version>${project.version}</version>
             </dependency>
@@ -170,6 +165,11 @@
             <dependency>
                 <groupId>io.github.x1aohei</groupId>
                 <artifactId>zeus-data-exchange</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.x1aohei</groupId>
+                <artifactId>zeus-web</artifactId>
                 <version>${project.version}</version>
             </dependency>
         </dependencies>

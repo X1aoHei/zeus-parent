@@ -1,7 +1,7 @@
-package com.wss.zeus.data.exchange.controller;
+package com.wss.zeus.data.exchange.starter.controller;
 
+import com.wss.zeus.core.common.Result;
 import com.wss.zeus.data.exchange.dto.ExportTaskSubmitReq;
-import com.wss.zeus.data.exchange.dto.ExportTaskSubmitRes;
 import com.wss.zeus.data.exchange.entity.ExcelExportTaskEntity;
 import com.wss.zeus.data.exchange.service.ExportTaskService;
 import lombok.RequiredArgsConstructor;
@@ -11,11 +11,13 @@ import java.util.List;
 
 /**
  * 导出任务 Controller
+ * <p>
+ * 放在 starter 包下，只有引入 starter 才会被组件扫描注册
+ * </p>
  *
  * @author wangshusheng
  */
 @RestController
-@RequestMapping("/export")
 @RequiredArgsConstructor
 public class ExportTaskController {
 
@@ -25,11 +27,11 @@ public class ExportTaskController {
      * 提交导出任务
      *
      * @param req 提交请求
-     * @return 提交响应
+     * @return 任务ID
      */
-    @PostMapping("/submit")
-    public ExportTaskSubmitRes submit(@RequestBody ExportTaskSubmitReq req) {
-        return exportTaskService.submit(req);
+    @PostMapping("/export/submit")
+    public Result<String> submit(@RequestBody ExportTaskSubmitReq req) {
+        return Result.success(exportTaskService.submit(req));
     }
 
     /**
@@ -38,8 +40,8 @@ public class ExportTaskController {
      * @param operatorUserId 操作人ID
      * @return 导出任务列表
      */
-    @GetMapping("/list")
-    public List<ExcelExportTaskEntity> listByOperatorUserId(@RequestParam Long operatorUserId) {
-        return exportTaskService.listByOperatorUserId(operatorUserId);
+    @GetMapping("/export/list")
+    public Result<List<ExcelExportTaskEntity>> listByOperatorUserId(@RequestParam Long operatorUserId) {
+        return Result.success(exportTaskService.listByOperatorUserId(operatorUserId));
     }
 }

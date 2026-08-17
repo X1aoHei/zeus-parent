@@ -6,6 +6,7 @@ import com.wss.zeus.data.exchange.service.ExportTaskService;
 import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.ComponentScan;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 
 /**
@@ -15,6 +16,7 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
  */
 @AutoConfiguration
 @MapperScan("com.wss.zeus.data.exchange.mapper")
+@ComponentScan({"com.wss.zeus.data.exchange.starter.controller", "com.wss.zeus.data.exchange.starter.mq"})
 public class DataExchangeAutoConfiguration {
 
     @Bean

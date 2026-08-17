@@ -65,17 +65,16 @@ public class ExcelExportTaskRepository extends ServiceImpl<ExcelExportTaskMapper
     }
 
     /**
-     * 乐观锁更新任务状态为处理中
+     * 更新任务状态为处理中
+     * <p>
+     * 调用前需确保已获取分布式锁，并已确认状态为 Pending
+     * </p>
      *
-     * @param taskId        任务ID
-     * @param currentVersion 当前版本号
-     * @return 是否更新成功
+     * @param taskId 任务ID
      */
-    public boolean updateStatusToProcessing(String taskId, Integer currentVersion) {
-        return update(new LambdaUpdateWrapper<ExcelExportTaskEntity>()
+    public void updateStatusToProcessing(String taskId) {
+        update(new LambdaUpdateWrapper<ExcelExportTaskEntity>()
                 .eq(ExcelExportTaskEntity::getTaskId, taskId)
-                .eq(ExcelExportTaskEntity::getVersion, currentVersion)
-                .eq(ExcelExportTaskEntity::getStatus, ExportTaskStatusEnum.PENDING.getValue())
                 .set(ExcelExportTaskEntity::getStatus, ExportTaskStatusEnum.PROCESSING.getValue()));
     }
 

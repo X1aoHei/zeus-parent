@@ -14,9 +14,9 @@ import com.wss.zeus.data.exchange.beans.ExcelFeignBean;
 import com.wss.zeus.data.exchange.entity.ExcelExportTaskEntity;
 import com.wss.zeus.data.exchange.enums.TemplateConfig;
 import com.wss.zeus.data.exchange.factory.ExcelFeignBeanFactory;
+import com.wss.zeus.data.exchange.handler.ExcelExportResult;
 import com.wss.zeus.data.exchange.handler.ExcelFeignHandler;
 import com.wss.zeus.data.exchange.handler.ExcelTableRowConvertor;
-import com.wss.zeus.data.exchange.repository.ExcelExportTaskRepository;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.ByteArrayInputStream;
@@ -24,12 +24,12 @@ import java.io.ByteArrayOutputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Objects;
-import java.util.UUID;
 
 /**
  * 默认 Excel Feign 执行器
  * <p>
- * 调用 Feign 接口获取数据 → 写入 OutputStream → 通过 FileStorageService 上传
+ * 只负责导出逻辑：调用 Feign 接口获取数据 → 写入 OutputStream → 通过 FileStorageService 上传
+ * 不处理任务状态更新
  * </p>
  *
  * @author wangshusheng
@@ -39,23 +39,19 @@ public class DefaultExcelFeignHandler implements ExcelFeignHandler {
 
     private final ExcelFeignBeanFactory excelFeignBeanFactory;
     private final FileStorageService fileStorageService;
-    private final ExcelExportTaskRepository excelExportTaskRepository;
 
     public DefaultExcelFeignHandler(ExcelFeignBeanFactory excelFeignBeanFactory,
-                                    FileStorageService fileStorageService,
-                                    ExcelExportTaskRepository excelExportTaskRepository) {
+                                    FileStorageService fileStorageService) {
         this.excelFeignBeanFactory = excelFeignBeanFactory;
         this.fileStorageService = fileStorageService;
-        this.excelExportTaskRepository = excelExportTaskRepository;
     }
 
     @Override
-    public void execute(ExcelExportTaskEntity task) {
+    public ExcelExportResult execute(ExcelExportTaskEntity task) {
         String bizName = task.getTemplateCode();
         ExcelFeignBean excelFeignBean = excelFeignBeanFactory.get(bizName);
         if (Objects.isNull(excelFeignBean)) {
-            excelExportTaskRepository.updateStatusToFail(task.getTaskId(), "未找到对应的ExcelFeign配置: " + bizName);
-            return;
+            throw new IllegalArgumentException("未找到对应的ExcelFeign配置: " + bizName);
         }
 
         try {
@@ -67,8 +63,7 @@ public class DefaultExcelFeignHandler implements ExcelFeignHandler {
             TemplateConfig templateConfig = excelFeignBeanFactory.getTemplateConfig(bizName);
             Class<? extends TableRowBaseData> clazz = chooseTemplate(excelFeignBean.getExcelFeign(), templateConfig);
             if (Objects.isNull(clazz)) {
-                excelExportTaskRepository.updateStatusToFail(task.getTaskId(), "未找到对应的Excel模板配置: " + bizName);
-                return;
+                throw new IllegalArgumentException("未找到对应的Excel模板配置: " + bizName);
             }
 
             // 3. 数据转换
@@ -89,14 +84,14 @@ public class DefaultExcelFeignHandler implements ExcelFeignHandler {
             uploadRequest.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
             String fileId = fileStorageService.upload(uploadRequest);
 
-            // 6. 更新任务状态为成功
-            excelExportTaskRepository.updateStatusToSuccess(task.getTaskId(), fileId, fileName);
+            log.info("导出文件生成成功, taskId={}, fileId={}", task.getTaskId(), fileId);
 
-            log.info("导出任务执行成功, taskId={}, fileId={}", task.getTaskId(), fileId);
+            // 6. 返回结果
+            return ExcelExportResult.of(fileId, fileName);
 
         } catch (Exception e) {
-            log.error("导出任务执行失败, taskId={}", task.getTaskId(), e);
-            throw new RuntimeException("导出任务执行失败", e);
+            log.error("导出文件生成失败, taskId={}", task.getTaskId(), e);
+            throw new RuntimeException("导出文件生成失败", e);
         }
     }
 

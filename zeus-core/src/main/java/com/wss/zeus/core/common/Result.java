@@ -8,5 +8,19 @@ import lombok.Data;
  */
 @Data
 public class Result<T> {
+
     private T data;
+
+    private Long code;
+
+    private String errorMsg;
+
+    public static final Long SUCCESS_CODE = 200L;
+
+    public static <T> Result<T> success(T data) {
+        Result<T> result = new Result<>();
+        result.setData(data);
+        result.setCode(SUCCESS_CODE);
+        return result;
+    }
 }

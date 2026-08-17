@@ -40,9 +40,8 @@ public class ExcelFeignConfiguration {
      */
     @Bean
     public DefaultExcelFeignHandler defaultExcelFeignHandler(ExcelFeignBeanFactory excelFeignBeanFactory,
-                                                             FileStorageService fileStorageService,
-                                                             ExcelExportTaskRepository excelExportTaskRepository) {
-        return new DefaultExcelFeignHandler(excelFeignBeanFactory, fileStorageService, excelExportTaskRepository);
+                                                             FileStorageService fileStorageService) {
+        return new DefaultExcelFeignHandler(excelFeignBeanFactory, fileStorageService);
     }
 
     /**

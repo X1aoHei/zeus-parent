@@ -1,4 +1,4 @@
-# ADR-0001: 导出任务执行架构：MQ 优先 + 定时任务兜底
+# ADR-0001: 导出任务执行架构：MQ 事务消息 + 定时任务兜底
 
 ## 状态
 
@@ -17,15 +17,34 @@
 
 ### 执行架构
 
-采用 **MQ 优先执行 + xxl-job 定时兜底** 的双保险模式：
+采用 **MQ 事务消息优先执行 + xxl-job 定时兜底** 的双保险模式：
 
 ```
-提交任务 → 创建 DB 记录（Pending）→ 发送 MQ 消息
-                                          ↓
-                                    MQ 消费者直接执行
-                                          ↓
-                                    （失败时）xxl-job 轮询 Pending 任务兜底执行
+提交任务
+    ↓
+1. Redis SETNX 幂等拦截（事务外）
+    ↓
+2. DB 查询幂等兜底（事务外）
+    ↓
+3. 发送 MQ 半消息（half message）→ MQ 暂不投递
+    ↓
+4. 执行本地事务（创建任务记录入库）
+    ↓
+5. 本地事务成功 → commit 半消息 → MQ 投递 → 消费者执行
+   本地事务失败 → rollback 半消息 → MQ 丢弃
+    ↓
+6. 如果 Broker 没收到响应 → 回查本地事务状态
+    ↓   查库判断记录是否存在 → 存在 commit / 不存在 rollback
 ```
+
+### 事务消息保证原子性
+
+采用 RocketMQ 事务消息保证「DB 入库成功 ↔ MQ 消息一定发出」的原子性：
+
+1. **半消息（half message）** — 发送到 Broker 但暂不投递，对消费者不可见
+2. **本地事务** — 在 `TransactionListener.executeLocalTransaction()` 中执行 DB 入库
+3. **二阶段提交** — 根据本地事务结果 commit 或 rollback 半消息
+4. **事务回查** — Broker 未收到响应时，调用 `checkLocalTransaction()` 查库确认
 
 ### 互斥机制
 
@@ -36,7 +55,7 @@ MQ 消费者和定时任务可能同时处理同一个任务，需要互斥保�
 
 ### 幂等机制
 
-用户可能重复提交导出请求，需要幂等保护。采用 **Redis SETNX + 数据库唯一索引** 双重幂等：
+用户可能重复提交导出请求，需要幂等保护。采用 **Redis SETNX + 数据库查询兜底** 双重幂等：
 
 1. **Redis SETNX** — 快速拦截，300 秒过期
 2. **数据库查询兜底** — 防止 Redis 失效时的穿透
@@ -55,9 +74,9 @@ MQ 消息体只传 `taskId`，消费者查库获取完整信息。理由：
 - 优点：简单
 - 缺点：实时性差，资源浪费
 
-### 2. 纯 MQ 模式
-- 优点：实时性好
-- 缺点：MQ 故障时任务丢失，无兜底
+### 2. 普通 MQ 模式（非事务消息）
+- 优点：实现简单
+- 缺点：DB 入库和 MQ 发送不是原子操作，可能数据不一致
 
 ### 3. 数据库行锁互斥
 - 优点：实现简单
@@ -65,7 +84,8 @@ MQ 消息体只传 `taskId`，消费者查库获取完整信息。理由：
 
 ## 影响
 
-- 新增 `zeus-mq` 模块依赖
+- 新增 `zeus-mq` 模块依赖（RocketMQ 事务消息支持）
 - 新增 `zeus-redis` 模块依赖
 - `ExcelExportTaskEntity` 新增 `version` 字段（需 DDL 变更）
 - `ExcelFeignHandler` 接口签名变更（接收实体对象而非分离参数）
+- `ExportTaskService.submit()` 不再使用 `@Transactional`，本地事务由 `TransactionListener` 管理

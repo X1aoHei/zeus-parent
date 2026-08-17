@@ -1,9 +1,9 @@
-package com.wss.zeus.data.exchange.mq;
+package com.wss.zeus.data.exchange.starter.mq;
 
 import com.wss.zeus.data.exchange.entity.ExcelExportTaskEntity;
 import com.wss.zeus.data.exchange.handler.ExcelExportExecutor;
+import com.wss.zeus.data.exchange.mq.ExportMqConstants;
 import com.wss.zeus.data.exchange.repository.ExcelExportTaskRepository;
-import com.wss.zeus.mq.model.MqMessage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
@@ -25,14 +25,13 @@ import java.util.Objects;
         selectorExpression = ExportMqConstants.TAG_EXPORT_TASK,
         consumerGroup = "zeus-data-exchange-export-task-consumer"
 )
-public class ExportTaskMqConsumer implements RocketMQListener<MqMessage<String>> {
+public class ExportTaskMqConsumer implements RocketMQListener<String> {
 
     private final ExcelExportTaskRepository excelExportTaskRepository;
     private final ExcelExportExecutor excelExportExecutor;
 
     @Override
-    public void onMessage(MqMessage<String> message) {
-        String taskId = message.getBody();
+    public void onMessage(String taskId) {
         log.info("收到导出任务MQ消息, taskId={}", taskId);
 
         // 1. 查询任务

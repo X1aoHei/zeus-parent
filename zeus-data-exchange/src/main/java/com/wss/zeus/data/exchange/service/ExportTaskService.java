@@ -1,23 +1,23 @@
 package com.wss.zeus.data.exchange.service;
 
+import com.wss.zeus.core.exception.BizException;
+import com.wss.zeus.core.exception.SystemException;
 import com.wss.zeus.data.exchange.dto.ExportTaskSubmitReq;
-import com.wss.zeus.data.exchange.dto.ExportTaskSubmitRes;
 import com.wss.zeus.data.exchange.entity.ExcelExportTaskEntity;
 import com.wss.zeus.data.exchange.enums.ExportTaskStatusEnum;
+import com.wss.zeus.data.exchange.exception.ExportException;
 import com.wss.zeus.data.exchange.mq.ExportMqConstants;
 import com.wss.zeus.data.exchange.repository.ExcelExportTaskRepository;
-import com.wss.zeus.mq.model.MqMessage;
-import com.wss.zeus.mq.producer.ZeusMqProducer;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.rocketmq.spring.core.RocketMQTemplate;
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
-import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.messaging.Message;
+import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
@@ -32,8 +32,7 @@ import java.util.concurrent.TimeUnit;
 public class ExportTaskService {
 
     private final ExcelExportTaskRepository excelExportTaskRepository;
-    private final ZeusMqProducer zeusMqProducer;
-    private final StringRedisTemplate stringRedisTemplate;
+    private final RocketMQTemplate rocketMQTemplate;
     private final RedissonClient redissonClient;
 
     /**
@@ -57,81 +56,41 @@ public class ExportTaskService {
     }
 
     /**
-     * 提交导出任务
-     * <p>
-     * 1. Redis SETNX 拦截重复请求
-     * 2. 创建任务记录（数据库唯一索引兜底）
-     * 3. 发送 MQ 消息
-     * </p>
+     * 提交导出任务（事务消息 + 分布式锁）
      *
      * @param req 提交请求
-     * @return 提交响应
+     * @return 任务ID
+     * @throws BizException 重复提交或获取锁失败时抛出
      */
-    @Transactional(rollbackFor = Exception.class)
-    public ExportTaskSubmitRes submit(ExportTaskSubmitReq req) {
-        // 1. 生成幂等 Key
-        String idempotentKey = buildIdempotentKey(req);
+    public String submit(ExportTaskSubmitReq req) {
+        String lockKey = ExportMqConstants.SUBMIT_LOCK_KEY_PREFIX
+                + req.getTemplateCode() + ":" + req.getOperatorUserId();
+        RLock lock = redissonClient.getLock(lockKey);
 
-        // 2. Redis SETNX 快速拦截
-        Boolean absent = stringRedisTemplate.opsForValue()
-                .setIfAbsent(idempotentKey, "1", ExportMqConstants.IDEMPOTENT_EXPIRE_SECONDS, TimeUnit.SECONDS);
-        if (Objects.equals(absent, Boolean.FALSE)) {
-            // 幂等命中，查询已有任务返回
-            ExcelExportTaskEntity existTask = excelExportTaskRepository.getByTemplateAndParam(
-                    req.getTemplateCode(), req.getTaskParam(), req.getOperatorUserId());
-            if (Objects.nonNull(existTask)) {
-                ExportTaskSubmitRes res = new ExportTaskSubmitRes();
-                res.setTaskId(existTask.getTaskId());
-                res.setStatus(existTask.getStatus());
-                res.setDuplicate(true);
-                return res;
+        try {
+            boolean locked = lock.tryLock(ExportMqConstants.LOCK_WAIT_TIME, TimeUnit.SECONDS);
+            if (!locked) {
+                throw new BizException(SystemException.REPEAT);
+            }
+
+            String taskId = UUID.randomUUID().toString().replace("-", "");
+            String destination = ExportMqConstants.TOPIC + ":" + ExportMqConstants.TAG_EXPORT_TASK;
+            Message<String> msg = MessageBuilder.withPayload(taskId)
+                    .setHeader("KEYS", taskId)
+                    .build();
+
+            // 发送事务消息，arg 传入任务参数
+            rocketMQTemplate.sendMessageInTransaction(destination, msg, req);
+
+            log.info("导出任务提交成功, taskId={}", taskId);
+            return taskId;
+
+        } catch (InterruptedException e) {
+            throw new BizException(ExportException.SUBMIT_ERROR);
+        } finally {
+            if (lock.isHeldByCurrentThread()) {
+                lock.unlock();
             }
         }
-
-        // 3. 检查数据库是否存在（唯一索引兜底）
-        ExcelExportTaskEntity existTask = excelExportTaskRepository.getByTemplateAndParam(
-                req.getTemplateCode(), req.getTaskParam(), req.getOperatorUserId());
-        if (Objects.nonNull(existTask)) {
-            ExportTaskSubmitRes res = new ExportTaskSubmitRes();
-            res.setTaskId(existTask.getTaskId());
-            res.setStatus(existTask.getStatus());
-            res.setDuplicate(true);
-            return res;
-        }
-
-        // 4. 创建任务记录
-        String taskId = UUID.randomUUID().toString().replace("-", "");
-        ExcelExportTaskEntity task = new ExcelExportTaskEntity();
-        task.setTaskId(taskId);
-        task.setTemplateCode(req.getTemplateCode());
-        task.setTaskParam(req.getTaskParam());
-        task.setOperatorUserId(req.getOperatorUserId());
-        task.setOperatorUserName(req.getOperatorUserName());
-        task.setStatus(ExportTaskStatusEnum.PENDING.getValue());
-        task.setFileType("XLSX");
-        task.setVersion(0);
-        excelExportTaskRepository.save(task);
-
-        // 5. 发送 MQ 消息
-        MqMessage<String> message = MqMessage.of(taskId, taskId);
-        zeusMqProducer.syncSend(ExportMqConstants.TOPIC, ExportMqConstants.TAG_EXPORT_TASK, message);
-
-        log.info("导出任务提交成功, taskId={}", taskId);
-
-        ExportTaskSubmitRes res = new ExportTaskSubmitRes();
-        res.setTaskId(taskId);
-        res.setStatus(ExportTaskStatusEnum.PENDING.getValue());
-        res.setDuplicate(false);
-        return res;
-    }
-
-    /**
-     * 构建幂等 Key
-     */
-    private String buildIdempotentKey(ExportTaskSubmitReq req) {
-        return ExportMqConstants.IDEMPOTENT_KEY_PREFIX
-                + req.getTemplateCode() + ":"
-                + req.getTaskParam().hashCode() + ":"
-                + req.getOperatorUserId();
     }
 }
