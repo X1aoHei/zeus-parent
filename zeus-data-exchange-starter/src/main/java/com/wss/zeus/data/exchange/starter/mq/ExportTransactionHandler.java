@@ -3,30 +3,33 @@ package com.wss.zeus.data.exchange.starter.mq;
 import com.wss.zeus.data.exchange.dto.ExportTaskSubmitReq;
 import com.wss.zeus.data.exchange.entity.ExcelExportTaskEntity;
 import com.wss.zeus.data.exchange.enums.ExportTaskStatusEnum;
+import com.wss.zeus.data.exchange.mq.ExportMqConstants;
 import com.wss.zeus.data.exchange.repository.ExcelExportTaskRepository;
+import com.wss.zeus.mq.annotation.TransactionTopic;
+import com.wss.zeus.mq.handler.TransactionHandler;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.rocketmq.spring.annotation.RocketMQTransactionListener;
-import org.apache.rocketmq.spring.core.RocketMQLocalTransactionListener;
 import org.apache.rocketmq.spring.core.RocketMQLocalTransactionState;
 import org.springframework.messaging.Message;
+import org.springframework.stereotype.Component;
 
 import java.util.Objects;
 
 /**
- * 导出任务事务消息监听器
+ * 导出任务事务处理器
  *
  * @author wangshusheng
  */
 @Slf4j
+@Component
 @RequiredArgsConstructor
-@RocketMQTransactionListener
-public class ExportTaskTransactionListener implements RocketMQLocalTransactionListener {
+@TransactionTopic(topic = ExportMqConstants.TOPIC, tag = ExportMqConstants.TAG_EXPORT_TASK)
+public class ExportTransactionHandler implements TransactionHandler {
 
     private final ExcelExportTaskRepository excelExportTaskRepository;
 
     @Override
-    public RocketMQLocalTransactionState executeLocalTransaction(Message message, Object arg) {
+    public RocketMQLocalTransactionState execute(Message message, Object arg) {
         ExportTaskSubmitReq req = (ExportTaskSubmitReq) arg;
         String taskId = (String) message.getHeaders().get("KEYS");
 
@@ -50,7 +53,7 @@ public class ExportTaskTransactionListener implements RocketMQLocalTransactionLi
     }
 
     @Override
-    public RocketMQLocalTransactionState checkLocalTransaction(Message message) {
+    public RocketMQLocalTransactionState check(Message message) {
         String taskId = (String) message.getHeaders().get("KEYS");
         log.info("事务回查, taskId={}", taskId);
 

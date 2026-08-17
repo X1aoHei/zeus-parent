@@ -26,6 +26,7 @@
         <module>zeus-data-exchange</module>
         <module>zeus-dubbo</module>
         <module>zeus-feign</module>
+        <module>zeus-mq</module>
         <module>zeus-mybatisplus</module>
         <module>zeus-redis</module>
         <module>zeus-task</module>
@@ -165,6 +166,11 @@
             <dependency>
                 <groupId>io.github.x1aohei</groupId>
                 <artifactId>zeus-data-exchange</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.x1aohei</groupId>
+                <artifactId>zeus-mq</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>

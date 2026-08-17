@@ -25,6 +25,10 @@
         </dependency>
         <dependency>
             <groupId>io.github.x1aohei</groupId>
+            <artifactId>zeus-mq</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.github.x1aohei</groupId>
             <artifactId>zeus-web</artifactId>
             <scope>provided</scope>
         </dependency>

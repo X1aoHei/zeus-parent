@@ -4,10 +4,10 @@ import com.wss.zeus.data.exchange.entity.ExcelExportTaskEntity;
 import com.wss.zeus.data.exchange.handler.ExcelExportExecutor;
 import com.wss.zeus.data.exchange.mq.ExportMqConstants;
 import com.wss.zeus.data.exchange.repository.ExcelExportTaskRepository;
+import com.wss.zeus.mq.annotation.ZeusMessageListener;
+import com.wss.zeus.mq.handler.MessageHandler;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
-import org.apache.rocketmq.spring.core.RocketMQListener;
 import org.springframework.stereotype.Component;
 
 import java.util.Objects;
@@ -20,12 +20,12 @@ import java.util.Objects;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-@RocketMQMessageListener(
+@ZeusMessageListener(
         topic = ExportMqConstants.TOPIC,
-        selectorExpression = ExportMqConstants.TAG_EXPORT_TASK,
+        tag = ExportMqConstants.TAG_EXPORT_TASK,
         consumerGroup = "zeus-data-exchange-export-task-consumer"
 )
-public class ExportTaskMqConsumer implements RocketMQListener<String> {
+public class ExportTaskMqConsumer implements MessageHandler<String> {
 
     private final ExcelExportTaskRepository excelExportTaskRepository;
     private final ExcelExportExecutor excelExportExecutor;
