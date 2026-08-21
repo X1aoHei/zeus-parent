@@ -30,6 +30,7 @@
         <module>zeus-mybatisplus</module>
         <module>zeus-redis</module>
         <module>zeus-task</module>
+        <module>zeus-tokenizer</module>
         <module>zeus-web</module>
         <module>zeus-data-exchange-starter</module>
     </modules>
@@ -171,6 +172,11 @@
             <dependency>
                 <groupId>io.github.x1aohei</groupId>
                 <artifactId>zeus-mq</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.x1aohei</groupId>
+                <artifactId>zeus-tokenizer</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
