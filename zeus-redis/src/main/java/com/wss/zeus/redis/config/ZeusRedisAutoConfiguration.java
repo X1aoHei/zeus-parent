@@ -1,5 +1,6 @@
 package com.wss.zeus.redis.config;
 
+import com.wss.zeus.redis.lock.DistributedLockExecutor;
 import com.wss.zeus.redis.properties.ZeusRedisProperties;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
@@ -14,6 +15,6 @@ import org.springframework.context.annotation.Import;
 @AutoConfiguration
 @ConditionalOnClass(name = "org.springframework.data.redis.core.RedisTemplate")
 @EnableConfigurationProperties(ZeusRedisProperties.class)
-@Import({RedisSerializerConfig.class, RedissonConfig.class})
+@Import({RedisSerializerConfig.class, RedissonConfig.class, DistributedLockExecutor.class})
 public class ZeusRedisAutoConfiguration {
 }

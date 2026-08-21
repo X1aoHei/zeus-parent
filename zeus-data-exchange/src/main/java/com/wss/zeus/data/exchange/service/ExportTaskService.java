@@ -1,25 +1,19 @@
 package com.wss.zeus.data.exchange.service;
 
-import com.wss.zeus.core.exception.BizException;
-import com.wss.zeus.core.exception.SystemException;
 import com.wss.zeus.data.exchange.dto.ExportTaskSubmitReq;
 import com.wss.zeus.data.exchange.entity.ExcelExportTaskEntity;
-import com.wss.zeus.data.exchange.enums.ExportTaskStatusEnum;
-import com.wss.zeus.data.exchange.exception.ExportException;
 import com.wss.zeus.data.exchange.mq.ExportMqConstants;
 import com.wss.zeus.data.exchange.repository.ExcelExportTaskRepository;
+import com.wss.zeus.redis.lock.DistributedLockExecutor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.spring.core.RocketMQTemplate;
-import org.redisson.api.RLock;
-import org.redisson.api.RedissonClient;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.UUID;
-import java.util.concurrent.TimeUnit;
 
 /**
  * 导出任务Service
@@ -33,7 +27,7 @@ public class ExportTaskService {
 
     private final ExcelExportTaskRepository excelExportTaskRepository;
     private final RocketMQTemplate rocketMQTemplate;
-    private final RedissonClient redissonClient;
+    private final DistributedLockExecutor distributedLockExecutor;
 
     /**
      * 根据操作人ID查询导出任务列表
@@ -60,37 +54,31 @@ public class ExportTaskService {
      *
      * @param req 提交请求
      * @return 任务ID
-     * @throws BizException 重复提交或获取锁失败时抛出
      */
     public String submit(ExportTaskSubmitReq req) {
         String lockKey = ExportMqConstants.SUBMIT_LOCK_KEY_PREFIX
                 + req.getTemplateCode() + ":" + req.getOperatorUserId();
-        RLock lock = redissonClient.getLock(lockKey);
 
-        try {
-            boolean locked = lock.tryLock(ExportMqConstants.LOCK_WAIT_TIME, TimeUnit.SECONDS);
-            if (!locked) {
-                throw new BizException(SystemException.REPEAT);
-            }
+        return distributedLockExecutor.executeWithLock(lockKey, ExportMqConstants.LOCK_WAIT_TIME, () -> doSubmit(req));
+    }
 
-            String taskId = UUID.randomUUID().toString().replace("-", "");
-            String destination = ExportMqConstants.TOPIC + ":" + ExportMqConstants.TAG_EXPORT_TASK;
-            Message<String> msg = MessageBuilder.withPayload(taskId)
-                    .setHeader("KEYS", taskId)
-                    .build();
+    /**
+     * 执行导出任务提交（业务逻辑）
+     *
+     * @param req 提交请求
+     * @return 任务ID
+     */
+    private String doSubmit(ExportTaskSubmitReq req) {
+        String taskId = UUID.randomUUID().toString().replace("-", "");
+        String destination = ExportMqConstants.TOPIC + ":" + ExportMqConstants.TAG_EXPORT_TASK;
+        Message<String> msg = MessageBuilder.withPayload(taskId)
+                .setHeader("KEYS", taskId)
+                .build();
 
-            // 发送事务消息，arg 传入任务参数
-            rocketMQTemplate.sendMessageInTransaction(destination, msg, req);
+        // 发送事务消息，arg 传入任务参数
+        rocketMQTemplate.sendMessageInTransaction(destination, msg, req);
 
-            log.info("导出任务提交成功, taskId={}", taskId);
-            return taskId;
-
-        } catch (InterruptedException e) {
-            throw new BizException(ExportException.SUBMIT_ERROR);
-        } finally {
-            if (lock.isHeldByCurrentThread()) {
-                lock.unlock();
-            }
-        }
+        log.info("导出任务提交成功, taskId={}", taskId);
+        return taskId;
     }
 }

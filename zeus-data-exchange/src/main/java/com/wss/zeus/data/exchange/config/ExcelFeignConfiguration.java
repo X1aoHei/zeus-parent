@@ -7,8 +7,8 @@ import com.wss.zeus.data.exchange.handler.impl.DefaultExcelExportExecutor;
 import com.wss.zeus.data.exchange.handler.impl.DefaultExcelFeignHandler;
 import com.wss.zeus.data.exchange.processor.ExcelFeignPostProcessor;
 import com.wss.zeus.data.exchange.repository.ExcelExportTaskRepository;
+import com.wss.zeus.redis.lock.DistributedLockExecutor;
 import lombok.extern.slf4j.Slf4j;
-import org.redisson.api.RedissonClient;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -50,7 +50,7 @@ public class ExcelFeignConfiguration {
     @Bean
     public ExcelExportExecutor excelExportExecutor(DefaultExcelFeignHandler defaultExcelFeignHandler,
                                                    ExcelExportTaskRepository excelExportTaskRepository,
-                                                   RedissonClient redissonClient) {
-        return new DefaultExcelExportExecutor(defaultExcelFeignHandler, excelExportTaskRepository, redissonClient);
+                                                   DistributedLockExecutor distributedLockExecutor) {
+        return new DefaultExcelExportExecutor(defaultExcelFeignHandler, excelExportTaskRepository, distributedLockExecutor);
     }
 }
