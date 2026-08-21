@@ -1,6 +1,7 @@
 package com.wss.zeus.data.exchange.handler.impl;
 
 import com.wss.zeus.data.exchange.entity.ExcelExportTaskEntity;
+import com.wss.zeus.data.exchange.enums.ExportTaskStatusEnum;
 import com.wss.zeus.data.exchange.handler.ExcelExportExecutor;
 import com.wss.zeus.data.exchange.handler.ExcelExportResult;
 import com.wss.zeus.data.exchange.handler.ExcelFeignHandler;
@@ -33,7 +34,12 @@ public class DefaultExcelExportExecutor implements ExcelExportExecutor {
         String taskId = task.getTaskId();
         String lockKey = ExportMqConstants.EXECUTE_LOCK_KEY_PREFIX + taskId;
 
-        distributedLockExecutor.tryExecuteWithLock(lockKey, ExportMqConstants.LOCK_WAIT_TIME, () -> doExecute(task));
+        try {
+            distributedLockExecutor.tryExecuteWithLock(lockKey, ExportMqConstants.LOCK_WAIT_TIME, () -> doExecute(task));
+        } catch (Exception e) {
+            log.error("导出任务执行失败, taskId={}", taskId, e);
+            excelExportTaskRepository.updateStatusToFail(taskId, e.getMessage());
+        }
     }
 
     /**
@@ -51,9 +57,10 @@ public class DefaultExcelExportExecutor implements ExcelExportExecutor {
             return;
         }
 
-        // 2. 判断状态是否为 Pending
-        if (!"Pending".equals(latestTask.getStatus())) {
-            log.info("任务状态不是Pending，跳过执行, taskId={}, status={}", taskId, latestTask.getStatus());
+        // 2. 判断状态是否为 Pending 或 Fail
+        if (!ExportTaskStatusEnum.PENDING.getValue().equals(latestTask.getStatus())
+                && !ExportTaskStatusEnum.FAIL.getValue().equals(latestTask.getStatus())) {
+            log.info("任务状态不是Pending或Fail，跳过执行, taskId={}, status={}", taskId, latestTask.getStatus());
             return;
         }
 

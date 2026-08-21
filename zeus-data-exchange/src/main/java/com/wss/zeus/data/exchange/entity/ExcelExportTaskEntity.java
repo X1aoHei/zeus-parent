@@ -76,6 +76,11 @@ public class ExcelExportTaskEntity {
     private String errorReason;
 
     /**
+     * 失败次数
+     */
+    private Integer failCount;
+
+    /**
      * 创建时间
      */
     @TableField(fill = FieldFill.INSERT)

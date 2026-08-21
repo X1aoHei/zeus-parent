@@ -13,7 +13,7 @@ import java.util.List;
 /**
  * 导出任务Job（兜底定时任务）
  * <p>
- * 轮询 Pending 状态的任务，通过 ExcelExportExecutor 执行（内部包含互斥逻辑）
+ * 轮询 Pending 和 Fail 状态的任务（失败次数 <= 5），通过 ExcelExportExecutor 执行（内部包含互斥逻辑）
  * </p>
  *
  * @author wangshusheng

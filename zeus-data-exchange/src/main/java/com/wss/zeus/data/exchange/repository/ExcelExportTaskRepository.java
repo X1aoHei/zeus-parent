@@ -35,13 +35,22 @@ public class ExcelExportTaskRepository extends ServiceImpl<ExcelExportTaskMapper
 
     /**
      * 查询待处理的导出任务
+     * <p>
+     * 查询 Pending 和 Fail 状态的任务，失败次数 <= 5
+     * </p>
      *
      * @param limit 查询数量
      * @return 待处理任务列表
      */
     public List<ExcelExportTaskEntity> listPendingTasks(int limit) {
         return list(new LambdaQueryWrapper<ExcelExportTaskEntity>()
-                .eq(ExcelExportTaskEntity::getStatus, ExportTaskStatusEnum.PENDING.getValue())
+                .in(ExcelExportTaskEntity::getStatus,
+                        ExportTaskStatusEnum.PENDING.getValue(),
+                        ExportTaskStatusEnum.FAIL.getValue())
+                .and(w -> w
+                        .le(ExcelExportTaskEntity::getFailCount, 5)
+                        .or()
+                        .isNull(ExcelExportTaskEntity::getFailCount))
                 .orderByAsc(ExcelExportTaskEntity::getCreateTime)
                 .last("LIMIT " + limit));
     }
@@ -95,7 +104,7 @@ public class ExcelExportTaskRepository extends ServiceImpl<ExcelExportTaskMapper
     }
 
     /**
-     * 更新任务状态为失败
+     * 更新任务状态为失败，并增加失败次数
      *
      * @param taskId      任务ID
      * @param errorReason 错误原因
@@ -105,7 +114,8 @@ public class ExcelExportTaskRepository extends ServiceImpl<ExcelExportTaskMapper
                 .eq(ExcelExportTaskEntity::getTaskId, taskId)
                 .set(ExcelExportTaskEntity::getStatus, ExportTaskStatusEnum.FAIL.getValue())
                 .set(ExcelExportTaskEntity::getErrorReason, errorReason)
-                .set(ExcelExportTaskEntity::getFinishTime, LocalDateTime.now()));
+                .set(ExcelExportTaskEntity::getFinishTime, LocalDateTime.now())
+                .setSql("fail_count = COALESCE(fail_count, 0) + 1"));
     }
 
     /**
