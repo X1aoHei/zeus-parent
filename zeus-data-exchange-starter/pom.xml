@@ -24,6 +24,10 @@
             <artifactId>zeus-data-exchange</artifactId>
         </dependency>
         <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-lang3</artifactId>
+        </dependency>
+        <dependency>
             <groupId>io.github.x1aohei</groupId>
             <artifactId>zeus-mq</artifactId>
         </dependency>

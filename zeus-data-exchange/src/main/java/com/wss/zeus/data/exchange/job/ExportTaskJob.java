@@ -1,11 +1,12 @@
 package com.wss.zeus.data.exchange.job;
 
+import com.wss.zeus.data.exchange.constant.ExportTaskConstant;
 import com.wss.zeus.data.exchange.entity.ExcelExportTaskEntity;
 import com.wss.zeus.data.exchange.handler.ExcelExportExecutor;
 import com.wss.zeus.data.exchange.service.ExportTaskService;
 import com.xxl.job.core.handler.annotation.XxlJob;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 
 import java.util.List;
@@ -13,12 +14,11 @@ import java.util.List;
 /**
  * 导出任务Job（兜底定时任务）
  * <p>
- * 轮询 Pending 和 Fail 状态的任务（失败次数 <= 5），通过 ExcelExportExecutor 执行（内部包含互斥逻辑）
+ * 轮询 Pending、未超限的 Fail，以及超时仍停在 Processing 的任务。执行器内部用锁和 version 互斥。
  * </p>
  *
  * @author wangshusheng
  */
-@Slf4j
 @RequiredArgsConstructor
 public class ExportTaskJob {
 
@@ -28,21 +28,13 @@ public class ExportTaskJob {
 
     @XxlJob("exportTaskForceExecute")
     public void exportTaskForceExecute() {
-        List<ExcelExportTaskEntity> tasks = exportTaskService.listPendingTasks(5);
-        if (tasks.isEmpty()) {
+        List<ExcelExportTaskEntity> tasks = exportTaskService.listPendingTasks(ExportTaskConstant.RECOVER_BATCH_SIZE);
+        if (CollectionUtils.isEmpty(tasks)) {
             return;
         }
 
         for (ExcelExportTaskEntity task : tasks) {
-            exportTaskExecutor.submit(() -> doExecuteTask(task));
-        }
-    }
-
-    private void doExecuteTask(ExcelExportTaskEntity task) {
-        try {
-            excelExportExecutor.execute(task);
-        } catch (Exception e) {
-            log.error("导出任务执行失败, taskId={}", task.getTaskId(), e);
+            exportTaskExecutor.submit(() -> excelExportExecutor.execute(task));
         }
     }
 }

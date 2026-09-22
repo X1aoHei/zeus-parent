@@ -1,24 +1,16 @@
-package com.wss.zeus.data.exchange.entity;
+package com.wss.zeus.data.exchange.dto;
 
-import com.baomidou.mybatisplus.annotation.*;
 import lombok.Data;
 
 import java.time.LocalDateTime;
 
 /**
- * 文件导出任务实体
+ * 导出任务查询结果
  *
  * @author wangshusheng
  */
 @Data
-@TableName("excel_export_task")
-public class ExcelExportTaskEntity {
-
-    /**
-     * 主键
-     */
-    @TableId(type = IdType.AUTO)
-    private Long id;
+public class ExportTaskResp {
 
     /**
      * 任务ID
@@ -41,14 +33,9 @@ public class ExcelExportTaskEntity {
     private String fileName;
 
     /**
-     * 文件类型 XLSX
+     * 文件类型
      */
     private String fileType;
-
-    /**
-     * 任务参数
-     */
-    private String taskParam;
 
     /**
      * 状态：待处理=Pending、处理中=Processing、成功=Success、失败=Fail
@@ -83,23 +70,5 @@ public class ExcelExportTaskEntity {
     /**
      * 创建时间
      */
-    @TableField(fill = FieldFill.INSERT)
     private LocalDateTime createTime;
-
-    /**
-     * 更新时间
-     */
-    @TableField(fill = FieldFill.INSERT_UPDATE)
-    private LocalDateTime updateTime;
-
-    /**
-     * 乐观锁版本，提交时从 0 开始
-     */
-    private Integer version;
-
-    /**
-     * 删除标识 0未删除 1已删除
-     */
-    @TableLogic
-    private Integer isDelete;
 }

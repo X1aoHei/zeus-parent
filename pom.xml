@@ -36,7 +36,7 @@
     </modules>
 
     <properties>
-        <revision>1.2.0</revision>
+        <revision>1.2.2</revision>
         <java.version>17</java.version>
         <lombok.version>1.18.30</lombok.version>
         <fastjson2.version>2.0.53</fastjson2.version>
@@ -44,6 +44,8 @@
         <mybatis-plus.version>3.5.12</mybatis-plus.version>
         <xxl-job.version>3.0.0</xxl-job.version>
         <redisson.version>3.27.1</redisson.version>
+        <commons-collections4.version>4.4</commons-collections4.version>
+        <guava.version>33.3.1-jre</guava.version>
     </properties>
 
     <dependencyManagement>
@@ -126,6 +128,16 @@
                 <groupId>org.redisson</groupId>
                 <artifactId>redisson-spring-boot-starter</artifactId>
                 <version>${redisson.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.commons</groupId>
+                <artifactId>commons-collections4</artifactId>
+                <version>${commons-collections4.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.google.guava</groupId>
+                <artifactId>guava</artifactId>
+                <version>${guava.version}</version>
             </dependency>
 
             <!-- Zeus 内部模块 -->

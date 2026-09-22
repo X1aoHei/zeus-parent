@@ -21,14 +21,9 @@ public final class ExportMqConstants {
     public static final String TAG_EXPORT_TASK = "export-task";
 
     /**
-     * Redis 分布式锁 Key 前缀（提交阶段）
+     * 导出任务消费者组
      */
-    public static final String SUBMIT_LOCK_KEY_PREFIX = "lock:export:task:submit:";
-
-    /**
-     * Redis 分布式锁 Key 前缀（执行阶段）
-     */
-    public static final String EXECUTE_LOCK_KEY_PREFIX = "lock:export:task:execute:";
+    public static final String EXPORT_TASK_CONSUMER_GROUP = "zeus-data-exchange-export-task-consumer";
 
     /**
      * 分布式锁等待时间（秒）

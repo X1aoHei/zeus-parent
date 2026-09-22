@@ -14,7 +14,7 @@ public enum ExportException implements BizError {
 
     SUBMIT_ERROR(1100501L, "提交失败");
 
-    private long code;
+    private Long code;
 
     private String errorMsg;
 

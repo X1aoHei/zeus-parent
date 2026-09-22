@@ -1,8 +1,8 @@
-package com.wss.zeus.data.exchange.starter;
+package com.wss.zeus.data.exchange.annotation;
 
 import com.wss.zeus.data.exchange.config.ExcelFeignConfiguration;
 import com.wss.zeus.data.exchange.enums.TemplateConfig;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import com.wss.zeus.data.exchange.registrar.ExcelFeignImportBeanDefinitionRegistrar;
 import org.springframework.context.annotation.Import;
 
 import java.lang.annotation.*;
@@ -11,10 +11,6 @@ import java.lang.annotation.*;
  * 启用 ExcelFeign 功能的注解
  * <p>
  * 在应用启动类上添加此注解，即可启用 ExcelFeign 功能。
- * </p>
- * <p>
- * 通过配置 {@code excel-feign.enabled=false} 可以禁用此功能，
- * 此时不会注入 ExcelFeignPostProcessor 和 ExcelFeignBeanFactory。
  * </p>
  *
  * <p>使用示例：</p>
@@ -28,12 +24,6 @@ import java.lang.annotation.*;
  * }
  * </pre>
  *
- * <p>配置示例：</p>
- * <pre>
- * excel-feign:
- *   enabled: true  # 默认为 true，设置为 false 可禁用
- * </pre>
- *
  * @author wangshusheng
  * @see ExcelFeignConfiguration
  * @see ExcelFeignImportBeanDefinitionRegistrar
@@ -41,8 +31,7 @@ import java.lang.annotation.*;
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
 @Documented
-@ConditionalOnProperty(prefix = "excel-feign", name = "enabled", havingValue = "true", matchIfMissing = true)
-@Import(ExcelFeignImportBeanDefinitionRegistrar.class)
+@Import({ExcelFeignImportBeanDefinitionRegistrar.class, ExcelFeignConfiguration.class})
 public @interface EnableExcelFeign {
 
     /**

@@ -6,7 +6,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.spring.annotation.RocketMQTransactionListener;
 import org.apache.rocketmq.spring.core.RocketMQLocalTransactionListener;
 import org.apache.rocketmq.spring.core.RocketMQLocalTransactionState;
+import org.springframework.aop.support.AopUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.annotation.AnnotatedElementUtils;
 import org.springframework.messaging.Message;
 
 import java.util.List;
@@ -36,7 +38,8 @@ public class ZeusTransactionListener implements RocketMQLocalTransactionListener
     @Autowired
     public void setHandlers(List<TransactionHandler> handlers) {
         for (TransactionHandler handler : handlers) {
-            TransactionTopic annotation = handler.getClass().getAnnotation(TransactionTopic.class);
+            TransactionTopic annotation = AnnotatedElementUtils.findMergedAnnotation(
+                    AopUtils.getTargetClass(handler), TransactionTopic.class);
             if (annotation != null) {
                 String key = buildKey(annotation.topic(), annotation.tag());
                 handlerMap.put(key, handler);

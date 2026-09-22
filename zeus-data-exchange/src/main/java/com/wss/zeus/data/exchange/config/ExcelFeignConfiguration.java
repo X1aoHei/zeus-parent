@@ -7,24 +7,20 @@ import com.wss.zeus.data.exchange.handler.impl.DefaultExcelExportExecutor;
 import com.wss.zeus.data.exchange.handler.impl.DefaultExcelFeignHandler;
 import com.wss.zeus.data.exchange.processor.ExcelFeignPostProcessor;
 import com.wss.zeus.data.exchange.repository.ExcelExportTaskRepository;
+import com.wss.zeus.data.exchange.service.ExportSubmitIdempotentStore;
 import com.wss.zeus.redis.lock.DistributedLockExecutor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 /**
- * ExcelFeign 自动配置类
+ * ExcelFeign 配置
  * <p>
- * 当配置 {@code excel-feign.enabled=true} 时（默认为 true），
- * 会自动注入 ExcelFeignPostProcessor 和 ExcelFeignBeanFactory
+ * 由 {@code @EnableExcelFeign} 导入，注册导出执行链。
  * </p>
  *
  * @author wangshusheng
  */
-@Slf4j
 @Configuration
-@ConditionalOnProperty(prefix = "excel-feign", name = "enabled", havingValue = "true", matchIfMissing = true)
 public class ExcelFeignConfiguration {
 
     /**
@@ -50,7 +46,9 @@ public class ExcelFeignConfiguration {
     @Bean
     public ExcelExportExecutor excelExportExecutor(DefaultExcelFeignHandler defaultExcelFeignHandler,
                                                    ExcelExportTaskRepository excelExportTaskRepository,
-                                                   DistributedLockExecutor distributedLockExecutor) {
-        return new DefaultExcelExportExecutor(defaultExcelFeignHandler, excelExportTaskRepository, distributedLockExecutor);
+                                                   DistributedLockExecutor distributedLockExecutor,
+                                                   ExportSubmitIdempotentStore exportSubmitIdempotentStore) {
+        return new DefaultExcelExportExecutor(defaultExcelFeignHandler, excelExportTaskRepository,
+                distributedLockExecutor, exportSubmitIdempotentStore);
     }
 }

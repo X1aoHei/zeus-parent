@@ -1,8 +1,10 @@
 package com.wss.zeus.redis.config;
 
+import org.apache.commons.lang3.StringUtils;
 import org.redisson.Redisson;
 import org.redisson.api.RedissonClient;
 import org.redisson.config.Config;
+import org.redisson.config.SingleServerConfig;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.autoconfigure.data.redis.RedisProperties;
@@ -34,13 +36,11 @@ public class RedissonConfig {
         String password = redisProperties.getPassword();
         int database = redisProperties.getDatabase();
 
-        // 单节点配置
-        config.useSingleServer()
+        SingleServerConfig serverConfig = config.useSingleServer()
                 .setAddress("redis://" + host + ":" + port)
                 .setDatabase(database);
-
-        if (password != null && !password.isEmpty()) {
-            config.useSingleServer().setPassword(password);
+        if (StringUtils.isNotBlank(password)) {
+            serverConfig.setPassword(password);
         }
 
         return Redisson.create(config);

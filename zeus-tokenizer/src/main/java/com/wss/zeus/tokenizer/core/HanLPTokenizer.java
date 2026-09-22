@@ -1,9 +1,9 @@
 package com.wss.zeus.tokenizer.core;
 
+import com.google.common.collect.Lists;
 import com.hankcs.hanlp.seg.common.Term;
 import com.hankcs.hanlp.tokenizer.IndexTokenizer;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -19,7 +19,7 @@ public class HanLPTokenizer implements Tokenizer {
     @Override
     public List<String> segment(String text) {
         List<Term> terms = IndexTokenizer.segment(text);
-        List<String> result = new ArrayList<>(terms.size());
+        List<String> result = Lists.newArrayList();
         for (Term term : terms) {
             result.add(term.word);
         }
@@ -29,7 +29,7 @@ public class HanLPTokenizer implements Tokenizer {
     @Override
     public List<String> segmentWithNature(String text) {
         List<Term> terms = IndexTokenizer.segment(text);
-        List<String> result = new ArrayList<>(terms.size());
+        List<String> result = Lists.newArrayList();
         for (Term term : terms) {
             result.add(term.word + "/" + term.nature);
         }

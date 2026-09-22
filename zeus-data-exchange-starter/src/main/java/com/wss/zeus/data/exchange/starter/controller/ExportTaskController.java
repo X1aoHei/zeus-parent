@@ -1,8 +1,8 @@
 package com.wss.zeus.data.exchange.starter.controller;
 
 import com.wss.zeus.core.common.Result;
+import com.wss.zeus.data.exchange.dto.ExportTaskResp;
 import com.wss.zeus.data.exchange.dto.ExportTaskSubmitReq;
-import com.wss.zeus.data.exchange.entity.ExcelExportTaskEntity;
 import com.wss.zeus.data.exchange.service.ExportTaskService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
@@ -41,7 +41,7 @@ public class ExportTaskController {
      * @return 导出任务列表
      */
     @GetMapping("/export/list")
-    public Result<List<ExcelExportTaskEntity>> listByOperatorUserId(@RequestParam Long operatorUserId) {
+    public Result<List<ExportTaskResp>> listByOperatorUserId(@RequestParam Long operatorUserId) {
         return Result.success(exportTaskService.listByOperatorUserId(operatorUserId));
     }
 }

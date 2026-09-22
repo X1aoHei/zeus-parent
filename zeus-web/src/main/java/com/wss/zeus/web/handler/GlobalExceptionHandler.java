@@ -2,6 +2,7 @@ package com.wss.zeus.web.handler;
 
 import com.wss.zeus.core.common.Result;
 import com.wss.zeus.core.exception.BizException;
+import com.wss.zeus.core.exception.SystemException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -43,8 +44,8 @@ public class GlobalExceptionHandler {
     public Result<Void> handleException(Exception e) {
         log.error("系统异常", e);
         Result<Void> result = new Result<>();
-        result.setCode(500L);
-        result.setErrorMsg("系统异常");
+        result.setCode(SystemException.SYSTEM_ERROR.getCode());
+        result.setErrorMsg(SystemException.SYSTEM_ERROR.getErrorMsg());
         return result;
     }
 }

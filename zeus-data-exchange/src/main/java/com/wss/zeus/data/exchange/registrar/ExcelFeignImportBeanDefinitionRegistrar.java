@@ -1,5 +1,6 @@
-package com.wss.zeus.data.exchange.starter;
+package com.wss.zeus.data.exchange.registrar;
 
+import com.wss.zeus.data.exchange.annotation.EnableExcelFeign;
 import com.wss.zeus.data.exchange.enums.TemplateConfig;
 import com.wss.zeus.data.exchange.factory.ExcelFeignBeanFactory;
 import com.wss.zeus.core.registrar.AbstractAnnotationRegistrar;

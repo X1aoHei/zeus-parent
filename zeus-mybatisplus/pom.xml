@@ -15,6 +15,10 @@
 
     <dependencies>
         <dependency>
+            <groupId>io.github.x1aohei</groupId>
+            <artifactId>zeus-core</artifactId>
+        </dependency>
+        <dependency>
             <groupId>com.baomidou</groupId>
             <artifactId>mybatis-plus-boot-starter</artifactId>
         </dependency>

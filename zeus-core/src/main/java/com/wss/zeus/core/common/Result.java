@@ -15,6 +15,8 @@ public class Result<T> {
 
     private String errorMsg;
 
+    private String traceId;
+
     public static final Long SUCCESS_CODE = 200L;
 
     public static <T> Result<T> success(T data) {
