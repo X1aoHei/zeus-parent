@@ -11,6 +11,7 @@
     </parent>
 
     <artifactId>zeus-data-exchange-starter</artifactId>
+    <name>zeus-data-exchange-starter</name>
 
     <properties>
         <maven.compiler.source>17</maven.compiler.source>
