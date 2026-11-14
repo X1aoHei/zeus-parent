@@ -1,0 +1,49 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: zeus-data-exchange-center-example
+  datasource:
+    url: ${MYSQL_URL:jdbc:mysql://rm-bp13s1jng7mbi1l04.mysql.rds.aliyuncs.com:3306/platform-resource-dev?serverTimezone=PRC&useUnicode=true&characterEncoding=utf8&nullNamePatternMatchesAll=true&rewriteBatchedStatements=true&useSSL=false&allowPublicKeyRetrieval=true}
+    username: ${MYSQL_USERNAME:user-dev}
+    password: ${MYSQL_PASSWORD:dasdwqce25bv3vr3}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  data:
+    redis:
+      host: ${REDIS_HOST:r-bp1gljqexkio4c3eh2.redis.rds.aliyuncs.com}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
+      database: ${REDIS_DATABASE:0}
+
+  cloud:
+    nacos:
+      discovery:
+        server-addr: ${NACOS_SERVER_ADDR:nacos-headless.yszx.ink:8848}
+        username: ${NACOS_USERNAME:nacos}
+        password: ${NACOS_PASSWORD:nacos123}
+
+zeus:
+  export:
+    mq-transaction-enabled: false
+  file:
+    local:
+      enabled: true
+      base-path: ${FILE_LOCAL_BASE_PATH:${user.home}/zeus-export}
+      url-prefix: ${FILE_LOCAL_URL_PREFIX:}
+
+rocketmq:
+  name-server: ${ROCKETMQ_NAME_SERVER:127.0.0.1:9876}
+  producer:
+    group: ${ROCKETMQ_PRODUCER_GROUP:zeus-data-exchange-center-producer}
+
+mybatis-plus:
+  configuration:
+    map-underscore-to-camel-case: true
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+  global-config:
+    db-config:
+      id-type: auto
+      logic-delete-field: isDelete
+      logic-delete-value: 1
+      logic-not-delete-value: 0

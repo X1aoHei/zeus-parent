@@ -1,6 +1,7 @@
 package com.wss.zeus.data.exchange.factory;
 
 import com.wss.zeus.data.exchange.beans.ExcelFeignBean;
+import com.wss.zeus.data.exchange.constant.ExportTaskConstant;
 import com.wss.zeus.data.exchange.enums.TemplateConfig;
 import lombok.Getter;
 
@@ -52,17 +53,22 @@ public class ExcelFeignBeanFactory<T extends Enum<T> & TemplateConfig> {
     }
 
     /**
-     * 获取 TemplateConfig 实例
+     * 先按类型标识查找，再按注解上的模板类查找 - 系AI自动生成
      *
-     * @param type 类型标识
-     * @return TemplateConfig 实例
-     * @throws IllegalStateException 如果 templateConfigClass 未设置
+     * @author WSS AI Agent @Date 2026-09-28
      */
-    public TemplateConfig getTemplateConfig(String type) {
+    public TemplateConfig getTemplateConfig(String type, Class<?> templateClass) {
         if (Objects.isNull(templateConfigClass)) {
-            throw new IllegalStateException("templateConfigClass is not set");
+            throw new IllegalStateException(ExportTaskConstant.TEMPLATE_ENUM_INVALID);
         }
-        return TemplateConfig.of(templateConfigClass, type);
+        TemplateConfig matched = TemplateConfig.find(templateConfigClass, type);
+        if (Objects.isNull(matched)) {
+            matched = TemplateConfig.ofTemplate(templateConfigClass, templateClass);
+        }
+        if (Objects.isNull(matched)) {
+            throw new IllegalArgumentException(ExportTaskConstant.TEMPLATE_CODE_INVALID + ": " + type);
+        }
+        return matched;
     }
 
 }

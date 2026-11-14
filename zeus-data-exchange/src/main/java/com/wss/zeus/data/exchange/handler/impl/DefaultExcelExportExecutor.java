@@ -9,8 +9,6 @@ import com.wss.zeus.data.exchange.handler.ExcelExportResult;
 import com.wss.zeus.data.exchange.handler.ExcelFeignHandler;
 import com.wss.zeus.data.exchange.mq.ExportMqConstants;
 import com.wss.zeus.data.exchange.repository.ExcelExportTaskRepository;
-import com.wss.zeus.data.exchange.service.ExportSubmitIdempotentStore;
-import com.wss.zeus.data.exchange.support.ExportIdempotentKeyBuilder;
 import com.wss.zeus.redis.lock.DistributedLockExecutor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -33,7 +31,6 @@ public class DefaultExcelExportExecutor implements ExcelExportExecutor {
     private final ExcelFeignHandler excelFeignHandler;
     private final ExcelExportTaskRepository excelExportTaskRepository;
     private final DistributedLockExecutor distributedLockExecutor;
-    private final ExportSubmitIdempotentStore exportSubmitIdempotentStore;
 
     @Override
     public void execute(ExcelExportTaskEntity task) {
@@ -101,14 +98,12 @@ public class DefaultExcelExportExecutor implements ExcelExportExecutor {
     }
 
     /**
-     * 回写失败并释放提交幂等，允许重新提交 - 系AI自动生成
+     * 回写失败 - 系AI自动生成
      *
-     * @author WSS AI Agent @Date 2026-09-22
+     * @author WSS AI Agent @Date 2026-09-24
      */
     private void doMarkFail(ExcelExportTaskEntity task, Integer version, Exception exception) {
         log.error("导出任务执行失败, taskId={}", task.getTaskId(), exception);
         excelExportTaskRepository.compareAndSetFail(task.getTaskId(), version, exception.getMessage());
-        exportSubmitIdempotentStore.release(ExportIdempotentKeyBuilder.build(
-                task.getTemplateCode(), task.getOperatorUserId(), task.getTaskParam()));
     }
 }

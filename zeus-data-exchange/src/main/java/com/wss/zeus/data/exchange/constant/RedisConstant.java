@@ -11,17 +11,12 @@ public final class RedisConstant {
     }
 
     /**
-     * 提交锁 lock:export:task:submit:{templateCode}:{operatorUserId}
+     * 提交锁 lock:export:task:submit:{requestId}
      */
-    public static final String EXPORT_SUBMIT_LOCK_KEY = "lock:export:task:submit:%s:%s";
+    public static final String EXPORT_SUBMIT_LOCK_KEY = "lock:export:task:submit:%s";
 
     /**
      * 执行锁 lock:export:task:execute:{taskId}
      */
     public static final String EXPORT_EXECUTE_LOCK_KEY = "lock:export:task:execute:%s";
-
-    /**
-     * 提交幂等 key，第三段是任务参数摘要
-     */
-    public static final String EXPORT_SUBMIT_IDEMPOTENT_KEY = "export:task:idempotent:%s:%s:%s";
 }

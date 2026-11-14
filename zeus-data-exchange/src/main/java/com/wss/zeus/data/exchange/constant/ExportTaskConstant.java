@@ -22,8 +22,6 @@ public final class ExportTaskConstant {
 
     public static final int RECOVER_BATCH_SIZE = 5;
 
-    public static final int IDEMPOTENT_TTL_SECONDS = 300;
-
     public static final int STALE_PROCESSING_MINUTES = 10;
 
     public static final int DEFAULT_PAGE_SIZE = 200;
@@ -37,6 +35,10 @@ public final class ExportTaskConstant {
     public static final String TEMPLATE_NOT_FOUND = "未找到对应的ExcelFeign配置";
 
     public static final String TEMPLATE_CLASS_NOT_FOUND = "未找到对应的Excel模板配置";
+
+    public static final String TEMPLATE_CODE_INVALID = "未找到模板枚举";
+
+    public static final String TEMPLATE_ENUM_INVALID = "模板配置类不是枚举";
 
     public static final String FEIGN_RESULT_EMPTY = "导出数据接口返回为空";
 

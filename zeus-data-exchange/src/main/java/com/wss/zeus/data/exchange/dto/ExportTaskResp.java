@@ -18,6 +18,11 @@ public class ExportTaskResp {
     private String taskId;
 
     /**
+     * 请求ID
+     */
+    private String requestId;
+
+    /**
      * 模版CODE
      */
     private String templateCode;

@@ -1,6 +1,7 @@
-CREATE TABLE `excel_export_task` (
+CREATE TABLE IF NOT EXISTS `excel_export_task` (
     `id`                  BIGINT       NOT NULL AUTO_INCREMENT COMMENT '主键',
     `task_id`             VARCHAR(32)  NOT NULL COMMENT '任务ID',
+    `request_id`          VARCHAR(64)  NOT NULL COMMENT '请求ID',
     `template_code`       VARCHAR(64)  NOT NULL COMMENT '模版CODE',
     `file_id`             VARCHAR(128)          DEFAULT NULL COMMENT '文件ID',
     `file_name`           VARCHAR(255)          DEFAULT NULL COMMENT '文件名称',
@@ -18,6 +19,7 @@ CREATE TABLE `excel_export_task` (
     `is_delete`           TINYINT      NOT NULL DEFAULT 0 COMMENT '删除标识：0未删除，1已删除',
     PRIMARY KEY (`id`),
     UNIQUE KEY `uk_task_id` (`task_id`),
+    UNIQUE KEY `uk_request_id` (`request_id`),
     KEY `idx_operator_create` (`operator_user_id`, `create_time`),
     KEY `idx_template_operator` (`template_code`, `operator_user_id`, `create_time`),
     KEY `idx_status_create` (`status`, `fail_count`, `create_time`),

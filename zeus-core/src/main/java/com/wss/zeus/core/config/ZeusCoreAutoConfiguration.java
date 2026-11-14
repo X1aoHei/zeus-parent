@@ -1,8 +1,13 @@
 package com.wss.zeus.core.config;
 
+import com.wss.zeus.core.common.file.FileStorageService;
+import com.wss.zeus.core.common.file.LocalFileProperties;
+import com.wss.zeus.core.common.file.LocalFileStorageService;
 import com.wss.zeus.core.util.SpringContextUtil;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 
 /**
@@ -11,6 +16,7 @@ import org.springframework.context.annotation.Bean;
  * @author WSS AI Agent @Date 2026-09-22
  */
 @AutoConfiguration
+@EnableConfigurationProperties(LocalFileProperties.class)
 public class ZeusCoreAutoConfiguration {
 
     /**
@@ -22,5 +28,17 @@ public class ZeusCoreAutoConfiguration {
     @ConditionalOnMissingBean
     public SpringContextUtil springContextUtil() {
         return new SpringContextUtil();
+    }
+
+    /**
+     * 没有自定义文件存储时使用本地目录 - 系AI自动生成
+     *
+     * @author WSS AI Agent @Date 2026-09-28
+     */
+    @Bean
+    @ConditionalOnMissingBean(FileStorageService.class)
+    @ConditionalOnProperty(prefix = "zeus.file.local", name = "enabled", havingValue = "true", matchIfMissing = true)
+    public LocalFileStorageService localFileStorageService(LocalFileProperties localFileProperties) {
+        return new LocalFileStorageService(localFileProperties);
     }
 }

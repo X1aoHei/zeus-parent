@@ -77,27 +77,17 @@ public class ExcelExportTaskRepository extends ServiceImpl<ExcelExportTaskMapper
     }
 
     /**
-     * 根据模版参数和操作人查询已有任务（幂等查询）
+     * 按请求 ID 查询已有任务 - 系AI自动生成
      *
-     * @param templateCode   模版CODE
-     * @param taskParam      任务参数
-     * @param operatorUserId 操作人ID
-     * @return 已有任务
+     * @author WSS AI Agent @Date 2026-09-24
      */
-    public ExcelExportTaskEntity getByTemplateAndParam(String templateCode, String taskParam, Long operatorUserId) {
-        LambdaQueryWrapper<ExcelExportTaskEntity> wrapper = new LambdaQueryWrapper<ExcelExportTaskEntity>()
-                .eq(ExcelExportTaskEntity::getTemplateCode, templateCode)
-                .eq(ExcelExportTaskEntity::getOperatorUserId, operatorUserId)
-                .ne(ExcelExportTaskEntity::getStatus, ExportTaskStatusEnum.FAIL.getValue())
-                .orderByDesc(ExcelExportTaskEntity::getCreateTime);
-        if (StringUtils.isBlank(taskParam)) {
-            wrapper.and(item -> item.isNull(ExcelExportTaskEntity::getTaskParam)
-                    .or()
-                    .eq(ExcelExportTaskEntity::getTaskParam, ""));
-        } else {
-            wrapper.eq(ExcelExportTaskEntity::getTaskParam, taskParam);
+    public ExcelExportTaskEntity getByRequestId(String requestId) {
+        if (StringUtils.isBlank(requestId)) {
+            return null;
         }
-        return doFirst(wrapper);
+        return doFirst(new LambdaQueryWrapper<ExcelExportTaskEntity>()
+                .eq(ExcelExportTaskEntity::getRequestId, requestId)
+                .orderByDesc(ExcelExportTaskEntity::getCreateTime));
     }
 
     /**

@@ -61,7 +61,8 @@ public class DefaultExcelFeignHandler implements ExcelFeignHandler {
         }
         JSONObject param = doParseParam(task.getTaskParam());
         List<?> rows = doCollectRows(excelFeignBean, param);
-        TemplateConfig templateConfig = excelFeignBeanFactory.getTemplateConfig(bizName);
+        TemplateConfig templateConfig = excelFeignBeanFactory.getTemplateConfig(bizName,
+                excelFeignBean.getExcelFeign().template());
         Class<? extends TableRowBaseData> clazz = doChooseTemplate(excelFeignBean.getExcelFeign(), templateConfig);
         if (Objects.isNull(clazz)) {
             throw new IllegalArgumentException(ExportTaskConstant.TEMPLATE_CLASS_NOT_FOUND + ": " + bizName);
@@ -147,12 +148,13 @@ public class DefaultExcelFeignHandler implements ExcelFeignHandler {
      * 选择模板类
      */
     private Class<? extends TableRowBaseData> doChooseTemplate(ExcelFeign excelFeign, TemplateConfig templateConfig) {
+        if (Objects.nonNull(templateConfig) && Objects.nonNull(templateConfig.getTemplate())
+                && !Objects.equals(templateConfig.getTemplate(), TableRowBaseData.class)) {
+            return templateConfig.getTemplate();
+        }
         if (Objects.nonNull(excelFeign.template())
                 && !Objects.equals(excelFeign.template(), TableRowBaseData.class)) {
             return excelFeign.template();
-        }
-        if (Objects.nonNull(templateConfig) && Objects.nonNull(templateConfig.getTemplate())) {
-            return templateConfig.getTemplate();
         }
         return null;
     }

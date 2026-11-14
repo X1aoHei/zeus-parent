@@ -1,6 +1,7 @@
 package com.wss.zeus.data.exchange.starter.config;
 
 import com.wss.zeus.data.exchange.config.ExcelFeignConfiguration;
+import com.wss.zeus.data.exchange.config.ExportProperties;
 import com.wss.zeus.data.exchange.handler.ExcelExportExecutor;
 import com.wss.zeus.data.exchange.job.ExportTaskJob;
 import com.wss.zeus.data.exchange.repository.ExcelExportTaskRepository;
@@ -9,6 +10,8 @@ import com.wss.zeus.data.exchange.starter.mq.ExportTaskMqConsumer;
 import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.FilterType;
@@ -20,6 +23,7 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
  * @author wangshusheng
  */
 @AutoConfiguration
+@EnableConfigurationProperties(ExportProperties.class)
 @MapperScan("com.wss.zeus.data.exchange.mapper")
 @ComponentScan(
         basePackages = "com.wss.zeus.data.exchange",
@@ -44,12 +48,13 @@ public class DataExchangeAutoConfiguration {
     }
 
     /**
-     * 有导出执行器时才注册 MQ 消费者 - 系AI自动生成
+     * 有导出执行器且开启事务消息时才注册 MQ 消费者 - 系AI自动生成
      *
      * @author WSS AI Agent @Date 2026-09-22
      */
     @Bean
     @ConditionalOnBean(ExcelExportExecutor.class)
+    @ConditionalOnProperty(prefix = "zeus.export", name = "mq-transaction-enabled", havingValue = "true", matchIfMissing = true)
     public ExportTaskMqConsumer exportTaskMqConsumer(ExcelExportTaskRepository excelExportTaskRepository,
                                                      ExcelExportExecutor excelExportExecutor) {
         return new ExportTaskMqConsumer(excelExportTaskRepository, excelExportExecutor);

@@ -1,11 +1,10 @@
 package com.wss.zeus.data.exchange.starter.mq;
 
-import com.wss.zeus.data.exchange.constant.ExportTaskConstant;
 import com.wss.zeus.data.exchange.dto.ExportTaskSubmitReq;
 import com.wss.zeus.data.exchange.entity.ExcelExportTaskEntity;
-import com.wss.zeus.data.exchange.enums.ExportTaskStatusEnum;
 import com.wss.zeus.data.exchange.mq.ExportMqConstants;
 import com.wss.zeus.data.exchange.repository.ExcelExportTaskRepository;
+import com.wss.zeus.data.exchange.support.ExportPendingTaskFactory;
 import com.wss.zeus.mq.annotation.TransactionTopic;
 import com.wss.zeus.mq.handler.TransactionHandler;
 import lombok.RequiredArgsConstructor;
@@ -39,14 +38,7 @@ public class ExportTransactionHandler implements TransactionHandler {
             log.error("本地事务参数无效, taskId={}", taskId);
             return RocketMQLocalTransactionState.ROLLBACK;
         }
-        ExcelExportTaskEntity task = new ExcelExportTaskEntity();
-        task.setTaskId(taskId);
-        task.setTemplateCode(req.getTemplateCode());
-        task.setTaskParam(req.getTaskParam());
-        task.setOperatorUserId(req.getOperatorUserId());
-        task.setOperatorUserName(req.getOperatorUserName());
-        task.setStatus(ExportTaskStatusEnum.PENDING.getValue());
-        task.setFileType(ExportTaskConstant.FILE_TYPE_XLSX);
+        ExcelExportTaskEntity task = ExportPendingTaskFactory.build(req, taskId);
         excelExportTaskRepository.savePendingTask(task);
         log.info("本地事务执行成功, taskId={}", taskId);
         return RocketMQLocalTransactionState.COMMIT;

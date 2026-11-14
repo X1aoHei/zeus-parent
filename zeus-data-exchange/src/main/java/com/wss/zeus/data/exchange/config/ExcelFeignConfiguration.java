@@ -7,7 +7,6 @@ import com.wss.zeus.data.exchange.handler.impl.DefaultExcelExportExecutor;
 import com.wss.zeus.data.exchange.handler.impl.DefaultExcelFeignHandler;
 import com.wss.zeus.data.exchange.processor.ExcelFeignPostProcessor;
 import com.wss.zeus.data.exchange.repository.ExcelExportTaskRepository;
-import com.wss.zeus.data.exchange.service.ExportSubmitIdempotentStore;
 import com.wss.zeus.redis.lock.DistributedLockExecutor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -46,9 +45,8 @@ public class ExcelFeignConfiguration {
     @Bean
     public ExcelExportExecutor excelExportExecutor(DefaultExcelFeignHandler defaultExcelFeignHandler,
                                                    ExcelExportTaskRepository excelExportTaskRepository,
-                                                   DistributedLockExecutor distributedLockExecutor,
-                                                   ExportSubmitIdempotentStore exportSubmitIdempotentStore) {
+                                                   DistributedLockExecutor distributedLockExecutor) {
         return new DefaultExcelExportExecutor(defaultExcelFeignHandler, excelExportTaskRepository,
-                distributedLockExecutor, exportSubmitIdempotentStore);
+                distributedLockExecutor);
     }
 }

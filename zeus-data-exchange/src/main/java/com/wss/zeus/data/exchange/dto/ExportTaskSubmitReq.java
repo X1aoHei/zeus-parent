@@ -11,6 +11,11 @@ import lombok.Data;
 public class ExportTaskSubmitReq {
 
     /**
+     * 请求ID
+     */
+    private String requestId;
+
+    /**
      * 模版CODE（对应 @ExcelFeign 的 name）
      */
     private String templateCode;
