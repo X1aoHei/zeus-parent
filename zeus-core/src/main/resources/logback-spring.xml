@@ -1,0 +1,214 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration scan="true" scanPeriod="60 seconds" debug="false">
+
+    <!-- ======  Spring Boot 扩展属性  ====== -->
+    <springProperty scope="context" name="SERVICE_NAME" source="spring.application.name" defaultValue="unknown"/>
+    <springProperty scope="context" name="ENV" source="spring.profiles.active" defaultValue="unknown"/>
+    <!-- log.home 未配置时由 ZeusLogHomeEnvironmentPostProcessor 默认写入 ${user.home}/logs -->
+    <springProperty scope="context" name="LOG_HOME" source="log.home" defaultValue="${user.home}/logs"/>
+    <springProperty scope="context" name="MAX_SINGLE_LOG_FILE_SIZE" source="log.max-single-log-file-size" defaultValue="100MB"/>
+    <springProperty scope="context" name="MAX_LOG_FILE_HISTORY" source="log.max-log-file-history" defaultValue="7"/>
+    <springProperty scope="context" name="LOG_FILE_TOTAL_CAPACITY" source="log.log-file-total-capacity" defaultValue="1GB"/>
+    <springProperty scope="context" name="ASYNC_DISCARDING_THRESHOLD" source="log.async.discarding-threshold" defaultValue="0"/>
+    <springProperty scope="context" name="ASYNC_LOG_QUEUE_SIZE" source="log.async.queue-size" defaultValue="256"/>
+
+    <property name="LOG_APP_NAME" value="${SERVICE_NAME}"/>
+
+    <!-- Spring Boot 默认控制台格式（CONSOLE_LOG_PATTERN + CONSOLE appender） -->
+    <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
+    <include resource="org/springframework/boot/logging/logback/console-appender.xml"/>
+
+    <!-- ======  文件日志  ====== -->
+    <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LOG_HOME}/${LOG_APP_NAME}/${LOG_APP_NAME}.log</file>
+        <append>true</append>
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <fileNamePattern>${LOG_HOME}/${LOG_APP_NAME}/${LOG_APP_NAME}.%d{yyyy-MM-dd}.%i.log.zip</fileNamePattern>
+            <maxFileSize>${MAX_SINGLE_LOG_FILE_SIZE}</maxFileSize>
+            <maxHistory>${MAX_LOG_FILE_HISTORY}</maxHistory>
+            <totalSizeCap>${LOG_FILE_TOTAL_CAPACITY}</totalSizeCap>
+        </rollingPolicy>
+        <encoder class="net.logstash.logback.encoder.LoggingEventCompositeJsonEncoder">
+            <providers>
+                <!-- 文件日志也加上 serviceName/env，方便本地排查 -->
+                <pattern>
+                    <pattern>
+                        {
+                        "serviceName": "${SERVICE_NAME}",
+                        "env": "${ENV}"
+                        }
+                    </pattern>
+                </pattern>
+                <!-- 时间 -->
+                <timestamp>
+                    <fieldName>timestamp</fieldName>
+                    <timeZone>Asia/Shanghai</timeZone>
+                    <pattern>yyyy-MM-dd HH:mm:ss.SSS</pattern>
+                </timestamp>
+                <!-- MDC（traceId、inCode 等）须在 message 之前，否则 JSON 里会出现在 message 后面 -->
+                <mdc/>
+                <!-- 日志级别 -->
+                <logLevel/>
+                <!-- 线程名 -->
+                <threadName/>
+                <!-- logger -->
+                <loggerName/>
+                <!-- json 里包含的参数（可选） -->
+                <arguments/>
+                <!-- 消息 -->
+                <message/>
+                <!-- 异常（可选） -->
+                <stackTrace>
+                    <fieldName>exception</fieldName>
+                    <throwableConverter class="net.logstash.logback.stacktrace.ShortenedThrowableConverter">
+                        <maxLength>2048</maxLength>
+                    </throwableConverter>
+                </stackTrace>
+            </providers>
+        </encoder>
+    </appender>
+
+    <appender name="ASYNC_FILE" class="ch.qos.logback.classic.AsyncAppender">
+        <discardingThreshold>${ASYNC_DISCARDING_THRESHOLD}</discardingThreshold>
+        <queueSize>${ASYNC_LOG_QUEUE_SIZE}</queueSize>
+        <includeCallerData>true</includeCallerData>
+        <appender-ref ref="FILE"/>
+    </appender>
+
+    <appender name="ERROR_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <filter class="ch.qos.logback.classic.filter.LevelFilter">
+            <level>ERROR</level>
+            <onMatch>ACCEPT</onMatch>
+            <onMismatch>DENY</onMismatch>
+        </filter>
+        <file>${LOG_HOME}/${LOG_APP_NAME}/${LOG_APP_NAME}-error.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <fileNamePattern>${LOG_HOME}/${LOG_APP_NAME}/${LOG_APP_NAME}.%d{yyyy-MM-dd}-error.%i.log.zip</fileNamePattern>
+            <maxFileSize>${MAX_SINGLE_LOG_FILE_SIZE}</maxFileSize>
+            <maxHistory>${MAX_LOG_FILE_HISTORY}</maxHistory>
+            <totalSizeCap>${LOG_FILE_TOTAL_CAPACITY}</totalSizeCap>
+        </rollingPolicy>
+        <encoder class="net.logstash.logback.encoder.LoggingEventCompositeJsonEncoder">
+            <providers>
+                <!--                暂时不考虑没有异常堆栈的error打印行数，性能损耗较大，毫秒到纳秒级别差距，官方不提倡，所以仅保留异常堆栈的行号-->
+                <!--                <callerData>-->
+                <!--                    <classFieldName>callerClass</classFieldName>     &lt;!&ndash; 类名 &ndash;&gt;-->
+                <!--                    <methodFieldName>callerMethod</methodFieldName>   &lt;!&ndash; 方法名 &ndash;&gt;-->
+                <!--                    <fileFieldName>callerFile</fileFieldName>         &lt;!&ndash; 文件名 &ndash;&gt;-->
+                <!--                    <lineFieldName>lineNumber</lineFieldName>         &lt;!&ndash; 行号 &ndash;&gt;-->
+                <!--                </callerData>-->
+
+                <pattern>
+                    <pattern>
+                        {
+                        "serviceName": "${SERVICE_NAME}",
+                        "env": "${ENV}"
+                        }
+                    </pattern>
+                </pattern>
+                <!-- 时间 -->
+
+                <timestamp>
+                    <fieldName>timestamp</fieldName>
+                    <timeZone>Asia/Shanghai</timeZone>
+                    <pattern>yyyy-MM-dd HH:mm:ss.SSS</pattern>
+                </timestamp>
+                <!-- MDC（traceId、inCode 等）须在 message 之前，否则 JSON 里会出现在 message 后面 -->
+                <mdc/>
+                <!-- 日志级别 -->
+                <logLevel/>
+                <!-- 线程名 -->
+                <threadName/>
+                <!-- logger -->
+                <loggerName/>
+                <!-- json 里包含的参数（可选） -->
+                <arguments/>
+                <!-- 消息 -->
+                <message/>
+                <!-- 异常（可选） -->
+                <stackTrace>
+                    <fieldName>exception</fieldName>
+                    <throwableConverter class="net.logstash.logback.stacktrace.ShortenedThrowableConverter">
+                        <maxLength>2048</maxLength>
+                    </throwableConverter>
+                </stackTrace>
+            </providers>
+        </encoder>
+    </appender>
+
+    <appender name="ASYNC_ERROR_FILE" class="ch.qos.logback.classic.AsyncAppender">
+        <discardingThreshold>${ASYNC_DISCARDING_THRESHOLD}</discardingThreshold>
+        <queueSize>${ASYNC_LOG_QUEUE_SIZE}</queueSize>
+        <includeCallerData>true</includeCallerData>
+        <appender-ref ref="ERROR_FILE"/>
+    </appender>
+
+    <!--    trace-->
+    <appender name="traceAppender" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LOG_HOME}/${LOG_APP_NAME}/${LOG_APP_NAME}-trace.log</file>
+        <append>true</append>
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <fileNamePattern>${LOG_HOME}/${LOG_APP_NAME}/${LOG_APP_NAME}.%d{yyyy-MM-dd}-trace.%i.log.zip</fileNamePattern>
+            <maxFileSize>${MAX_SINGLE_LOG_FILE_SIZE}</maxFileSize>
+            <maxHistory>${MAX_LOG_FILE_HISTORY}</maxHistory>
+            <totalSizeCap>${LOG_FILE_TOTAL_CAPACITY}</totalSizeCap>
+        </rollingPolicy>
+        <encoder class="net.logstash.logback.encoder.LoggingEventCompositeJsonEncoder">
+            <providers>
+                <!-- 文件日志也加上 serviceName/env，方便本地排查 -->
+                <pattern>
+                    <pattern>
+                        {
+                        "serviceName": "${SERVICE_NAME}",
+                        "env": "${ENV}"
+                        }
+                    </pattern>
+                </pattern>
+                <!-- 时间 -->
+                <timestamp>
+                    <fieldName>timestamp</fieldName>
+                    <timeZone>Asia/Shanghai</timeZone>
+                    <pattern>yyyy-MM-dd HH:mm:ss.SSS</pattern>
+                </timestamp>
+                <!-- MDC（traceId、inCode 等）须在 message 之前，否则 JSON 里会出现在 message 后面 -->
+                <mdc/>
+                <!-- 日志级别 -->
+                <logLevel/>
+                <!-- 线程名 -->
+                <threadName/>
+                <!-- logger -->
+                <loggerName/>
+                <!-- json 里包含的参数（可选） -->
+                <arguments/>
+                <!-- 消息 -->
+                <message/>
+                <!-- 异常（可选） -->
+                <stackTrace>
+                    <throwableConverter class="net.logstash.logback.stacktrace.ShortenedThrowableConverter">
+                        <maxLength>2048</maxLength>
+                    </throwableConverter>
+                </stackTrace>
+            </providers>
+        </encoder>
+    </appender>
+    <appender name="async_traceAppender" class="ch.qos.logback.classic.AsyncAppender">
+        <discardingThreshold>${ASYNC_DISCARDING_THRESHOLD}</discardingThreshold>
+        <queueSize>${ASYNC_LOG_QUEUE_SIZE}</queueSize>
+        <includeCallerData>true</includeCallerData>
+        <appender-ref ref="traceAppender"/>
+    </appender>
+
+
+    <logger name="trace" additivity="false">
+        <level value="info"/>
+        <appender-ref ref="CONSOLE"/>
+        <appender-ref ref="async_traceAppender"/>
+    </logger>
+
+    <!-- ======  根 logger：控制台 + 异步文件  ====== -->
+    <root level="INFO">
+        <appender-ref ref="CONSOLE"/>
+        <appender-ref ref="ASYNC_FILE"/>
+        <appender-ref ref="ASYNC_ERROR_FILE"/>
+    </root>
+</configuration>

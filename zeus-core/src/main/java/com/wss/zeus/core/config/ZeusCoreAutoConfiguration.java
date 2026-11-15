@@ -1,10 +1,12 @@
 package com.wss.zeus.core.config;
 
+import com.wss.zeus.core.aspect.ControllerTraceAspect;
 import com.wss.zeus.core.common.file.FileStorageService;
 import com.wss.zeus.core.common.file.LocalFileProperties;
 import com.wss.zeus.core.common.file.LocalFileStorageService;
 import com.wss.zeus.core.util.SpringContextUtil;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -40,5 +42,16 @@ public class ZeusCoreAutoConfiguration {
     @ConditionalOnProperty(prefix = "zeus.file.local", name = "enabled", havingValue = "true", matchIfMissing = true)
     public LocalFileStorageService localFileStorageService(LocalFileProperties localFileProperties) {
         return new LocalFileStorageService(localFileProperties);
+    }
+
+    /**
+     * Controller 接口的请求/响应 trace 日志切面
+     */
+    @Bean
+    @ConditionalOnMissingBean
+    @ConditionalOnClass(name = "org.springframework.web.bind.annotation.RestController")
+    @ConditionalOnProperty(prefix = "zeus.controller.trace", name = "enabled", havingValue = "true", matchIfMissing = true)
+    public ControllerTraceAspect controllerTraceAspect() {
+        return new ControllerTraceAspect();
     }
 }

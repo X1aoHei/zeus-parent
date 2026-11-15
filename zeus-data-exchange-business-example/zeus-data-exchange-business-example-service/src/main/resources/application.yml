@@ -1,12 +1,15 @@
 server:
   port: 8081
 
+log:
+  home: ${LOG_HOME:${user.home}/logs}
+
 spring:
   application:
     name: ExportFeign
   cloud:
     nacos:
       discovery:
-        server-addr: ${NACOS_SERVER_ADDR:nacos-headless.yszx.ink:8848}
+        server-addr: ${NACOS_SERVER_ADDR:129.203.128.194:8848}
         username: ${NACOS_USERNAME:nacos}
-        password: ${NACOS_PASSWORD:nacos123}
+        password: ${NACOS_PASSWORD:nacos}

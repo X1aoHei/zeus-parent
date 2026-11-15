@@ -1,0 +1,181 @@
+#                                    __   __  __
+#                                    \ \ / / / /
+#                                     \ V / / /
+#                                      \_/  \/
+#
+#                                    V E C T O R
+#                                   Configuration
+#
+# ------------------------------------------------------------------------------
+# Website: https://vector.dev
+# Docs: https://vector.dev/docs
+# Chat: https://chat.vector.dev
+# ------------------------------------------------------------------------------
+data_dir: "D:/Vector/vector-data"
+
+api:
+  enabled: true
+  address: "127.0.0.1:8686"
+
+sources:
+  zeus_app_files:
+    type: file
+    include:
+      # 只采集 logs 下 zeus 开头目录
+      - "C:/Users/17197/logs/zeus*/*.log"
+    exclude:
+      - "C:/Users/17197/logs/zeus*/*-error.log"
+      - "C:/Users/17197/logs/zeus*/*-trace.log"
+      - "C:/Users/17197/logs/**/*.zip"
+    read_from: end
+    # 缩短新文件发现间隔（默认约 1s）
+    glob_minimum_cooldown_ms: 200
+
+  zeus_error_files:
+    type: file
+    include:
+      - "C:/Users/17197/logs/zeus*/*-error.log"
+    exclude:
+      - "C:/Users/17197/logs/**/*.zip"
+    read_from: end
+    glob_minimum_cooldown_ms: 200
+
+  zeus_trace_files:
+    type: file
+    include:
+      - "C:/Users/17197/logs/zeus*/*-trace.log"
+    exclude:
+      - "C:/Users/17197/logs/**/*.zip"
+    read_from: end
+    glob_minimum_cooldown_ms: 200
+
+transforms:
+  parse_app:
+    type: remap
+    inputs: ["zeus_app_files"]
+    drop_on_error: true
+    source: |
+      # 先保存路径；. = parse_json 会覆盖整条事件
+      file_path = string(.file) ?? ""
+      # Windows 行尾 \r 会导致 JSON 解析失败，失败后原文会直通 OpenObserve
+      raw = strip_whitespace(replace(string!(.message), "\r", ""))
+      parsed, err = parse_json(raw)
+      if err != null { abort }
+      . = parsed
+      .log_type = "app"
+      .host = get_hostname!()
+      .log_file = file_path
+      # timestamp 保持日志文件原文字符串，不做时区/格式转换
+
+  parse_error:
+    type: remap
+    inputs: ["zeus_error_files"]
+    drop_on_error: true
+    source: |
+      file_path = string(.file) ?? ""
+      raw = strip_whitespace(replace(string!(.message), "\r", ""))
+      parsed, err = parse_json(raw)
+      if err != null { abort }
+      . = parsed
+      .log_type = "error"
+      .host = get_hostname!()
+      .log_file = file_path
+      # timestamp 保持日志文件原文字符串，不做时区/格式转换
+
+  parse_trace:
+    type: remap
+    inputs: ["zeus_trace_files"]
+    drop_on_error: true
+    source: |
+      file_path = string(.file) ?? ""
+      raw = strip_whitespace(replace(string!(.message), "\r", ""))
+      # 外层：Logback JSON
+      parsed, err = parse_json(raw)
+      if err != null { abort }
+      . = parsed
+      .log_type = "trace"
+      .host = get_hostname!()
+      .log_file = file_path
+      # timestamp 保持日志文件原文字符串，不做时区/格式转换
+      # 内层：TraceLog（在 message 字符串里）
+      payload, err = parse_json(string(.message) ?? "")
+      if err == null {
+        .url = payload.url
+        .cost = payload.cost
+        .request = payload.request
+        .response = payload.response
+      }
+
+sinks:
+  o2_logs:
+    type: http
+    inputs: ["parse_app"]
+    uri: "http://127.0.0.1:5080/api/default/zeus_logs/_json"
+    method: post
+    auth:
+      strategy: basic
+      user: "root@example.com"
+      password: "Wang-0826"
+    encoding:
+      codec: json
+    # 只保留逗号 framing。不要再加 payload_prefix/suffix：
+    # Vector 0.61 批量 json 已是 [{...},{...}]，再包一层会变成 [[{...}]]，
+    # O2 返回 HTTP 200 但 successful=0，Vector 误 ack，表现为不等待条件却一直不入库。
+    framing:
+      method: character_delimited
+      character_delimited:
+        delimiter: ","
+    batch:
+      max_events: 20
+      timeout_secs: 1
+    buffer:
+      type: disk
+      max_size: 536870912
+      when_full: block
+
+  o2_errors:
+    type: http
+    inputs: ["parse_error"]
+    uri: "http://127.0.0.1:5080/api/default/zeus_errors/_json"
+    method: post
+    auth:
+      strategy: basic
+      user: "root@example.com"
+      password: "Wang-0826"
+    encoding:
+      codec: json
+    framing:
+      method: character_delimited
+      character_delimited:
+        delimiter: ","
+    batch:
+      max_events: 10
+      timeout_secs: 1
+    buffer:
+      type: disk
+      max_size: 536870912
+      when_full: block
+
+  o2_traces:
+    type: http
+    inputs: ["parse_trace"]
+    uri: "http://127.0.0.1:5080/api/default/zeus_traces/_json"
+    method: post
+    auth:
+      strategy: basic
+      user: "root@example.com"
+      password: "Wang-0826"
+    encoding:
+      codec: json
+    framing:
+      method: character_delimited
+      character_delimited:
+        delimiter: ","
+    batch:
+      # trace 优先低延迟：攒满 5 条或最多等 1 秒就发
+      max_events: 5
+      timeout_secs: 1
+    buffer:
+      type: disk
+      max_size: 536870912
+      when_full: block
