@@ -66,15 +66,6 @@ public class ExportTaskService {
      * @return 导出任务列表
      */
     public List<ExportTaskResp> listByOperatorUserId(Long operatorUserId) {
-        log.info("这是我自定义的info日志:{}", operatorUserId);
-        ExcelExportTaskEntity excelExportTaskEntity = new ExcelExportTaskEntity();
-        excelExportTaskEntity.setTaskId("aaaa12132123");
-        log.info("自定义info：:{}", JSON.toJSONString(excelExportTaskEntity));
-        try {
-            int i = 1 / 0;
-        } catch (Exception e) {
-            log.error("参数:{}, 错误信息:", operatorUserId, e.getMessage());
-        }
         List<ExcelExportTaskEntity> tasks = excelExportTaskRepository.listByOperatorUserId(operatorUserId);
         if (CollectionUtils.isEmpty(tasks)) {
             return Collections.emptyList();
