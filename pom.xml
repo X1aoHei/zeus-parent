@@ -38,7 +38,7 @@
     </modules>
 
     <properties>
-        <revision>1.2.2</revision>
+        <revision>1.2.3</revision>
         <java.version>17</java.version>
         <lombok.version>1.18.30</lombok.version>
         <mapstruct.version>1.5.5.Final</mapstruct.version>

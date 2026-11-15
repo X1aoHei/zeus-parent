@@ -41,12 +41,12 @@
             <dependency>
                 <groupId>io.github.x1aohei</groupId>
                 <artifactId>zeus-core</artifactId>
-                <version>1.2.2</version>
+                <version>${parent.version}</version>
             </dependency>
             <dependency>
                 <groupId>io.github.x1aohei</groupId>
                 <artifactId>zeus-feign</artifactId>
-                <version>1.2.2</version>
+                <version>${parent.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
