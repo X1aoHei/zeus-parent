@@ -11,6 +11,11 @@ import lombok.Data;
 public class TraceLog {
 
     /**
+     * 链路追踪 ID
+     */
+    private String traceId;
+
+    /**
      * 接口完整 URL
      */
     private String url;

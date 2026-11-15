@@ -1,5 +1,6 @@
 package com.wss.zeus.core.common;
 
+import com.wss.zeus.core.trace.TraceContext;
 import lombok.Data;
 
 /**
@@ -23,6 +24,7 @@ public class Result<T> {
         Result<T> result = new Result<>();
         result.setData(data);
         result.setCode(SUCCESS_CODE);
+        result.setTraceId(TraceContext.getTraceId());
         return result;
     }
 }

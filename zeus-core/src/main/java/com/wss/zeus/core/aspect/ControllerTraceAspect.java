@@ -1,6 +1,8 @@
 package com.wss.zeus.core.aspect;
 
 import com.alibaba.fastjson2.JSON;
+import com.wss.zeus.core.trace.TraceConstants;
+import com.wss.zeus.core.trace.TraceContext;
 import com.wss.zeus.core.trace.TraceLog;
 import jakarta.servlet.ServletRequest;
 import jakarta.servlet.ServletResponse;
@@ -38,8 +40,11 @@ public class ControllerTraceAspect {
 
     @Around("execution(public * com.wss.zeus..controller..*(..))")
     public Object around(ProceedingJoinPoint pjp) throws Throwable {
+        // Controller 入口通常无上游 traceId：Filter 已处理；此处兜底初始化
+        ensureControllerTraceId();
         long start = System.currentTimeMillis();
         TraceLog traceLog = new TraceLog();
+        traceLog.setTraceId(TraceContext.getTraceId());
         traceLog.setUrl(resolveUrl());
         traceLog.setRequest(resolveRequest(pjp));
         try {
@@ -53,6 +58,20 @@ public class ControllerTraceAspect {
             traceLog.setCost(System.currentTimeMillis() - start);
             TRACE_LOG.info(JSON.toJSONString(traceLog));
         }
+    }
+
+    /**
+     * Controller 入口：请求头没有 traceId 时初始化；有则沿用（一般由 TraceIdFilter 完成）
+     */
+    private void ensureControllerTraceId() {
+        if (TraceContext.getTraceId() != null) {
+            return;
+        }
+        String incoming = null;
+        if (RequestContextHolder.getRequestAttributes() instanceof ServletRequestAttributes attributes) {
+            incoming = attributes.getRequest().getHeader(TraceConstants.TRACE_ID);
+        }
+        TraceContext.setOrInit(incoming);
     }
 
     private String resolveUrl() {

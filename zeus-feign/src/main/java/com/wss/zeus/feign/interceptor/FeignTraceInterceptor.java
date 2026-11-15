@@ -1,6 +1,8 @@
 package com.wss.zeus.feign.interceptor;
 
 import com.alibaba.fastjson2.JSON;
+import com.wss.zeus.core.trace.TraceConstants;
+import com.wss.zeus.core.trace.TraceContext;
 import com.wss.zeus.core.trace.TraceLog;
 import feign.InvocationContext;
 import feign.Request;
@@ -10,6 +12,8 @@ import feign.ResponseInterceptor;
 import feign.ResponseInterceptor.Chain;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
@@ -32,6 +36,11 @@ public class FeignTraceInterceptor implements RequestInterceptor, ResponseInterc
 
     @Override
     public void apply(RequestTemplate template) {
+        // 将上游请求头 / 当前线程中的 traceId 写入本地，并透传到下游
+        String traceId = resolveAndBindTraceId();
+        if (traceId != null && !traceId.isBlank()) {
+            template.header(TraceConstants.TRACE_ID, traceId);
+        }
         START_TIME.set(System.currentTimeMillis());
     }
 
@@ -39,6 +48,7 @@ public class FeignTraceInterceptor implements RequestInterceptor, ResponseInterc
     public Object intercept(InvocationContext invocationContext, Chain chain) throws Exception {
         Request request = invocationContext.response().request();
         TraceLog traceLog = new TraceLog();
+        traceLog.setTraceId(TraceContext.getTraceId());
         traceLog.setUrl(request.url());
         traceLog.setRequest(resolveRequest(request));
         try {
@@ -56,6 +66,25 @@ public class FeignTraceInterceptor implements RequestInterceptor, ResponseInterc
             START_TIME.remove();
             TRACE_LOG.info(JSON.toJSONString(traceLog));
         }
+    }
+
+    /**
+     * Feign 出站：优先用线程本地已有的 traceId；
+     * 若无则从当前 Servlet 请求头读取上游 traceId 并写入线程本地。
+     */
+    private String resolveAndBindTraceId() {
+        String traceId = TraceContext.getTraceId();
+        if (traceId != null && !traceId.isBlank()) {
+            return traceId;
+        }
+        if (RequestContextHolder.getRequestAttributes() instanceof ServletRequestAttributes attributes) {
+            String incoming = attributes.getRequest().getHeader(TraceConstants.TRACE_ID);
+            if (incoming != null && !incoming.isBlank()) {
+                TraceContext.setTraceId(incoming.trim());
+                return TraceContext.getTraceId();
+            }
+        }
+        return TraceContext.initIfAbsent();
     }
 
     private Object resolveRequest(Request request) {

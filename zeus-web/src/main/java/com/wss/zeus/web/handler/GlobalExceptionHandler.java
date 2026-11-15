@@ -3,6 +3,7 @@ package com.wss.zeus.web.handler;
 import com.wss.zeus.core.common.Result;
 import com.wss.zeus.core.exception.BizException;
 import com.wss.zeus.core.exception.SystemException;
+import com.wss.zeus.core.trace.TraceContext;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -31,6 +32,7 @@ public class GlobalExceptionHandler {
         Result<Void> result = new Result<>();
         result.setCode(e.getCode());
         result.setErrorMsg(e.getErrorMsg());
+        result.setTraceId(TraceContext.getTraceId());
         return result;
     }
 
@@ -46,6 +48,7 @@ public class GlobalExceptionHandler {
         Result<Void> result = new Result<>();
         result.setCode(SystemException.SYSTEM_ERROR.getCode());
         result.setErrorMsg(SystemException.SYSTEM_ERROR.getErrorMsg());
+        result.setTraceId(TraceContext.getTraceId());
         return result;
     }
 }
