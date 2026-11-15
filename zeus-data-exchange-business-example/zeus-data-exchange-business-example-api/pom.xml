@@ -11,6 +11,7 @@
     </parent>
 
     <artifactId>zeus-data-exchange-business-example-api</artifactId>
+    <name>zeus-data-exchange-business-example-api</name>
     <version>${api.version}</version>
 
     <properties>
